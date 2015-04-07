@@ -63,6 +63,7 @@
 #define LINK_ATTR_NS_PID	(1 << 30)
 #define LINK_ATTR_LINK_NETNSID  (1 << 31)
 
+static struct nl_cache_ops rtnl_link_bridge_ops;
 static struct nl_cache_ops rtnl_link_ops;
 static struct nl_object_ops link_obj_ops;
 /** @endcond */
@@ -104,6 +105,22 @@ static int af_clone(struct rtnl_link *link, struct rtnl_link_af_ops *ops,
 	if (ops->ao_clone &&
 	    !(dst->l_af_data[ops->ao_family] = ops->ao_clone(dst, data)))
 		return -NLE_NOMEM;
+
+	return 0;
+}
+
+static int af_fill_bridge(struct rtnl_link *link, struct rtnl_link_af_ops *ops,
+			  void *data, void *arg)
+{
+	struct nl_msg *msg = arg;
+	struct nlattr *af_attr;
+	int err;
+
+	if (!ops->ao_fill_af)
+		return 0;
+
+	if ((err = ops->ao_fill_af(link, arg, data)) < 0)
+		return err;
 
 	return 0;
 }
@@ -478,8 +495,8 @@ int rtnl_link_info_parse(struct rtnl_link *link, struct nlattr **tb)
 	return 0;
 }
 
-static int link_msg_parser(struct nl_cache_ops *ops, struct sockaddr_nl *who,
-			   struct nlmsghdr *n, struct nl_parser_param *pp)
+static int __link_msg_parser(struct nlmsghdr *n, struct nl_parser_param *pp,
+			     int (*af_parser)(struct rtnl_link *, struct nlattr *))
 {
 	struct rtnl_link *link;
 	struct ifinfomsg *ifi;
@@ -590,21 +607,9 @@ static int link_msg_parser(struct nl_cache_ops *ops, struct sockaddr_nl *who,
 	}
 
 	if (tb[IFLA_AF_SPEC]) {
-		struct nlattr *af_attr;
-		int remaining;
-
-		nla_for_each_nested(af_attr, tb[IFLA_AF_SPEC], remaining) {
-			af_ops = af_lookup_and_alloc(link, nla_type(af_attr));
-			if (af_ops && af_ops->ao_parse_af) {
-				char *af_data = link->l_af_data[nla_type(af_attr)];
-
-				err = af_ops->ao_parse_af(link, af_attr, af_data);
-				if (err < 0)
-					goto errout;
-			}
-
-		}
-		link->ce_mask |= LINK_ATTR_AF_SPEC;
+		err = af_parser(link, tb[IFLA_AF_SPEC]);
+		if (err < 0)
+			goto errout;
 	}
 
 	if (tb[IFLA_PROMISCUITY]) {
@@ -643,11 +648,54 @@ errout:
 	return err;
 }
 
-static int link_request_update(struct nl_cache *cache, struct nl_sock *sk)
+static int af_parse_bridge(struct rtnl_link *link, struct nlattr *af_spec)
 {
-	int family = cache->c_iarg1;
+	struct rtnl_link_af_ops *af_ops;
+	int err;
 
-	return nl_rtgen_request(sk, RTM_GETLINK, family, NLM_F_DUMP);
+	af_ops = af_lookup_and_alloc(link, link->l_family);
+	if (af_ops && af_ops->ao_parse_af) {
+		char *af_data = link->l_af_data[link->l_family];
+		err = af_ops->ao_parse_af(link, af_spec,
+					  link->l_af_data[link->l_family]);
+		if (err < 0)
+			return err;
+	}
+	link->ce_mask |= LINK_ATTR_AF_SPEC;
+	return 0;
+}
+
+static int link_bridge_msg_parser(struct nl_cache_ops *ops, struct sockaddr_nl *who,
+				  struct nlmsghdr *n, struct nl_parser_param *pp)
+{
+	return __link_msg_parser(n, pp, af_parse_bridge);
+}
+
+static int af_parse(struct rtnl_link *link, struct nlattr *af_spec)
+{
+	struct rtnl_link_af_ops *af_ops;
+	struct nlattr *af_attr;
+	int err, remaining;
+
+	nla_for_each_nested(af_attr, af_spec, remaining) {
+		af_ops = af_lookup_and_alloc(link, nla_type(af_attr));
+		if (af_ops && af_ops->ao_parse_af) {
+			char *af_data = link->l_af_data[nla_type(af_attr)];
+
+			err = af_ops->ao_parse_af(link, af_attr, af_data);
+			if (err < 0)
+				return err;
+		}
+
+	}
+	link->ce_mask |= LINK_ATTR_AF_SPEC;
+	return 0;
+}
+
+static int link_msg_parser(struct nl_cache_ops *ops, struct sockaddr_nl *who,
+			   struct nlmsghdr *n, struct nl_parser_param *pp)
+{
+	return __link_msg_parser(n, pp, af_parse);
 }
 
 static void link_dump_line(struct nl_object *obj, struct nl_dump_params *p)
@@ -1030,9 +1078,13 @@ static char *link_attrs2str(int attrs, char *buf, size_t len)
 int rtnl_link_alloc_cache(struct nl_sock *sk, int family, struct nl_cache **result)
 {
 	struct nl_cache * cache;
+	struct nl_cache_ops *ops = &rtnl_link_ops;
 	int err;
-	
-	cache = nl_cache_alloc(&rtnl_link_ops);
+
+	if (family == AF_BRIDGE)
+		ops = &rtnl_link_bridge_ops;
+
+	cache = nl_cache_alloc(ops);
 	if (!cache)
 		return -NLE_NOMEM;
 
@@ -1066,7 +1118,8 @@ struct rtnl_link *rtnl_link_get(struct nl_cache *cache, int ifindex)
 {
 	struct rtnl_link *link;
 
-	if (cache->c_ops != &rtnl_link_ops)
+	if (cache->c_ops != &rtnl_link_ops &&
+	    cache->c_ops != &rtnl_link_bridge_ops)
 		return NULL;
 
 	nl_list_for_each_entry(link, &cache->c_items, ce_list) {
@@ -1099,7 +1152,8 @@ struct rtnl_link *rtnl_link_get_by_name(struct nl_cache *cache,
 {
 	struct rtnl_link *link;
 
-	if (cache->c_ops != &rtnl_link_ops)
+	if (cache->c_ops != &rtnl_link_ops &&
+	    cache->c_ops != &rtnl_link_bridge_ops)
 		return NULL;
 
 	nl_list_for_each_entry(link, &cache->c_items, ce_list) {
@@ -1110,6 +1164,54 @@ struct rtnl_link *rtnl_link_get_by_name(struct nl_cache *cache,
 	}
 
 	return NULL;
+}
+
+static int __rtnl_link_build_get_request(int ifindex, const char *name,
+					 struct nl_msg **result, int flags,
+					 int family)
+{
+	struct ifinfomsg ifi;
+	struct nl_msg *msg;
+
+	memset(&ifi, 0, sizeof(ifi));
+
+	if (!(msg = nlmsg_alloc_simple(RTM_GETLINK, flags)))
+		return -NLE_NOMEM;
+
+	if (ifindex > 0)
+		ifi.ifi_index = ifindex;
+
+	ifi.ifi_family = family;
+
+	if (nlmsg_append(msg, &ifi, sizeof(ifi), NLMSG_ALIGNTO) < 0)
+		goto nla_put_failure;
+
+	if (name)
+		NLA_PUT_STRING(msg, IFLA_IFNAME, name);
+
+	NLA_PUT_U32(msg, IFLA_EXT_MASK, 0xffffffff);
+
+	*result = msg;
+	return 0;
+
+nla_put_failure:
+	nlmsg_free(msg);
+	return -NLE_MSGSIZE;
+}
+
+static int link_request_update(struct nl_cache *cache, struct nl_sock *sk)
+{
+	int family = cache->c_iarg1;
+	struct nl_msg *msg;
+	int err;
+
+	err = __rtnl_link_build_get_request(0, NULL, &msg, NLM_F_DUMP, family);
+	if (err)
+		return err;
+
+	err = nl_send_auto(sk, msg);
+	nlmsg_free(msg);
+	return err;
 }
 
 /**
@@ -1129,34 +1231,13 @@ struct rtnl_link *rtnl_link_get_by_name(struct nl_cache *cache,
 int rtnl_link_build_get_request(int ifindex, const char *name,
 				struct nl_msg **result)
 {
-	struct ifinfomsg ifi;
-	struct nl_msg *msg;
-
 	if (ifindex <= 0 && !name) {
 		APPBUG("ifindex or name must be specified");
 		return -NLE_MISSING_ATTR;
 	}
 
-	memset(&ifi, 0, sizeof(ifi));
-
-	if (!(msg = nlmsg_alloc_simple(RTM_GETLINK, 0)))
-		return -NLE_NOMEM;
-
-	if (ifindex > 0)
-		ifi.ifi_index = ifindex;
-
-	if (nlmsg_append(msg, &ifi, sizeof(ifi), NLMSG_ALIGNTO) < 0)
-		goto nla_put_failure;
-
-	if (name)
-		NLA_PUT_STRING(msg, IFLA_IFNAME, name);
-
-	*result = msg;
-	return 0;
-
-nla_put_failure:
-	nlmsg_free(msg);
-	return -NLE_MSGSIZE;
+	return __rtnl_link_build_get_request(ifindex, name, result,
+					     0, AF_UNSPEC);
 }
 
 /**
@@ -1216,7 +1297,7 @@ int rtnl_link_get_kernel(struct nl_sock *sk, int ifindex, const char *name,
 	 if (err == 0 && obj)
 		 wait_for_ack(sk);
 
-	return 0;
+	 return 0;
 }
 
 /**
@@ -1336,6 +1417,11 @@ static int build_link_msg(int cmd, struct ifinfomsg *hdr,
 {
 	struct nl_msg *msg;
 	struct nlattr *af_spec;
+	int (*af_filler)(struct rtnl_link *, struct rtnl_link_af_ops *,
+			 void *, void *) = af_fill;
+
+	if (hdr->ifi_family == AF_BRIDGE)
+		af_filler = af_fill_bridge;
 
 	msg = nlmsg_alloc_simple(cmd, flags);
 	if (!msg)
@@ -1370,7 +1456,7 @@ static int build_link_msg(int cmd, struct ifinfomsg *hdr,
 	if (!(af_spec = nla_nest_start(msg, IFLA_AF_SPEC)))
 		goto nla_put_failure;
 
-	if (do_foreach_af(link, af_fill, msg) < 0)
+	if (do_foreach_af(link, af_filler, msg) < 0)
 		goto nla_put_failure;
 
 	nla_nest_end(msg, af_spec);
@@ -1549,8 +1635,10 @@ retry:
 		goto errout;
 
 	err = wait_for_ack(sk);
-	if (err == -NLE_OPNOTSUPP && msg->nm_nlh->nlmsg_type == RTM_NEWLINK) {
+	if ((err == -NLE_OPNOTSUPP || err == -NLE_AF_NOSUPPORT) &&
+	    msg->nm_nlh->nlmsg_type == RTM_NEWLINK) {
 		msg->nm_nlh->nlmsg_type = RTM_SETLINK;
+		msg->nm_nlh->nlmsg_seq = NL_AUTO_SEQ;
 		goto retry;
 	}
 
@@ -1580,18 +1668,18 @@ errout:
  * @return 0 on success or a negative error code.
  */
 int rtnl_link_build_delete_request(const struct rtnl_link *link,
-				   struct nl_msg **result)
+                                   struct nl_msg **result)
 {
 	struct nl_msg *msg;
-	struct ifinfomsg ifi = {
-		.ifi_index = link->l_index,
-	};
-
-	if (!(link->ce_mask & (LINK_ATTR_IFINDEX | LINK_ATTR_IFNAME))) {
-		APPBUG("ifindex or name must be specified");
-		return -NLE_MISSING_ATTR;
-	}
-
+        struct ifinfomsg ifi = {
+                .ifi_index = link->l_index,
+        };
+ 
+        if (!(link->ce_mask & (LINK_ATTR_IFINDEX | LINK_ATTR_IFNAME))) {
+                APPBUG("ifindex or name must be specified");
+                return -NLE_MISSING_ATTR;
+        }
+ 
 	if (!(msg = nlmsg_alloc_simple(RTM_DELLINK, 0)))
 		return -NLE_NOMEM;
 
@@ -1607,6 +1695,38 @@ int rtnl_link_build_delete_request(const struct rtnl_link *link,
 nla_put_failure:
 	nlmsg_free(msg);
 	return -NLE_MSGSIZE;
+}
+ 
+
+/**
+ * Build a netlink message requesting the deletion of a link's AF-specific attrs
+ * @arg link		Link to delete
+ * @arg result		Pointer to store resulting netlink message
+ *
+ * The behaviour of this function is identical to
+ * rtnl_link_delete_af() with the exception that it will not send the
+ * message but return it in the provided return pointer instead.
+ *
+ * @see rtnl_link_delete()
+ *
+ * @return 0 on success or a negative error code.
+ */
+int rtnl_link_build_delete_request_af(const struct rtnl_link *link,
+				      struct nl_msg **result)
+{
+	struct ifinfomsg ifi = {
+		.ifi_family = link->l_family,
+		.ifi_index = link->l_index,
+		.ifi_flags = link->l_flags,
+	};
+
+
+	if (!(link->ce_mask & (LINK_ATTR_IFINDEX | LINK_ATTR_IFNAME))) {
+		APPBUG("ifindex or name must be specified");
+		return -NLE_MISSING_ATTR;
+	}
+
+	return build_link_msg(RTM_DELLINK, &ifi, link, 0, result);
 }
 
 /**
@@ -1639,6 +1759,37 @@ int rtnl_link_delete(struct nl_sock *sk, const struct rtnl_link *link)
 	int err;
 	
 	if ((err = rtnl_link_build_delete_request(link, &msg)) < 0)
+		return err;
+
+	return nl_send_sync(sk, msg);
+}
+
+/**
+ * Delete link's AF-specific attributes
+ * @arg sk		Netlink socket
+ * @arg link		Link from which to delete AF-specific attributes
+ *
+ * Builds a \c RTM_DELLINK netlink message requesting the deletion of
+ * a network link's AF-specific attributes and sends the message to
+ * the kernel.
+ *
+ * If no matching link exists, the function will return
+ * -NLE_OBJ_NOTFOUND.
+ *
+ * After sending, the function will wait for the ACK or an eventual
+ * error message to be received and will therefore block until the
+ * operation has been completed.
+ *
+ * @copydoc auto_ack_warning
+ *
+ * @return 0 on success or a negative error code.
+ */
+int rtnl_link_delete_af(struct nl_sock *sk, const struct rtnl_link *link)
+{
+	struct nl_msg *msg;
+	int err;
+	
+	if ((err = rtnl_link_build_delete_request_af(link, &msg)) < 0)
 		return err;
 
 	return nl_send_sync(sk, msg);
@@ -2817,14 +2968,38 @@ static struct nl_cache_ops rtnl_link_ops = {
 	.co_obj_ops		= &link_obj_ops,
 };
 
+static struct nl_af_group link_bridge_groups[] = {
+	{ AF_BRIDGE,    RTNLGRP_LINK },
+	{ END_OF_GROUP_LIST },
+};
+
+static struct nl_cache_ops rtnl_link_bridge_ops = {
+	.co_name		= "route/link/bridge",
+	.co_hdrsize		= sizeof(struct ifinfomsg),
+	.co_msgtypes		= {
+					{ RTM_NEWLINK, NL_ACT_NEW, "new" },
+					{ RTM_DELLINK, NL_ACT_DEL, "del" },
+					{ RTM_GETLINK, NL_ACT_GET, "get" },
+					{ RTM_SETLINK, NL_ACT_CHANGE, "set" },
+					END_OF_MSGTYPES_LIST,
+				  },
+	.co_protocol		= NETLINK_ROUTE,
+	.co_groups		= link_bridge_groups,
+	.co_request_update	= link_request_update,
+	.co_msg_parser		= link_bridge_msg_parser,
+	.co_obj_ops		= &link_obj_ops,
+};
+
 static void __init link_init(void)
 {
 	nl_cache_mngt_register(&rtnl_link_ops);
+	nl_cache_mngt_register(&rtnl_link_bridge_ops);
 }
 
 static void __exit link_exit(void)
 {
 	nl_cache_mngt_unregister(&rtnl_link_ops);
+	nl_cache_mngt_unregister(&rtnl_link_bridge_ops);
 }
 
 /** @} */
