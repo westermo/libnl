@@ -884,6 +884,13 @@ global:
 	rtnl_link_ipvlan_get_mode;
 	rtnl_link_set_link_netnsid;
 	rtnl_link_delete_af;
+        rtnl_link_bridge_vlan_foreach;
+        rtnl_link_bridge_vlan_get;
+        rtnl_link_bridge_vlan_add;
+        rtnl_link_bridge_vlan_del;
+        rtnl_link_bridge_vlan_flush;
+	rtnl_link_bridge_vlan_get_pvid;
+        rtnl_link_build_add_request;
 } libnl_3_2_26;
 
 libnl_3_2_28 {
