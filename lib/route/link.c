@@ -143,8 +143,6 @@ static int af_clone(struct rtnl_link *link, struct rtnl_link_af_ops *ops,
 static int af_fill_bridge(struct rtnl_link *link, struct rtnl_link_af_ops *ops,
 			  void *data, void *arg)
 {
-	struct nl_msg *msg = arg;
-	struct nlattr *af_attr;
 	int err;
 
 	if (!ops->ao_fill_af)
@@ -778,7 +776,6 @@ static int af_parse_bridge(struct rtnl_link *link, struct nlattr *af_spec)
 
 	af_ops = af_lookup_and_alloc(link, link->l_family);
 	if (af_ops && af_ops->ao_parse_af) {
-		char *af_data = link->l_af_data[link->l_family];
 		err = af_ops->ao_parse_af(link, af_spec,
 					  link->l_af_data[link->l_family]);
 		if (err < 0)
@@ -1359,7 +1356,6 @@ static int __rtnl_link_build_get_request(int ifindex, const char *name,
 
 	if (nlmsg_append(msg, &ifi, sizeof(ifi), NLMSG_ALIGNTO) < 0)
 		goto nla_put_failure;
-	}
 
 	if (name)
 		NLA_PUT_STRING(msg, IFLA_IFNAME, name);
