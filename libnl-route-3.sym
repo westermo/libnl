@@ -875,6 +875,8 @@ global:
 
 libnl_3_2_27 {
 global:
+	rtnl_addr_get_alias;
+	rtnl_addr_set_alias;
 	rtnl_link_get_link_netnsid;
 	rtnl_link_ipvlan_alloc;
 	rtnl_link_is_ipvlan;
