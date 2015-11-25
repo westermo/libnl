@@ -25,11 +25,14 @@
 #include <netlink-private/route/link/api.h>
 #include <linux/if_bridge.h>
 
+#define VLAN_VID_MASK           0x0fff /* VLAN Identifier */
+
 /** @cond SKIP */
 #define BRIDGE_ATTR_PORT_STATE		(1 << 0)
 #define BRIDGE_ATTR_PRIORITY		(1 << 1)
 #define BRIDGE_ATTR_COST		(1 << 2)
 #define BRIDGE_ATTR_FLAGS		(1 << 3)
+#define BRIDGE_ATTR_PORT_VLAN          (1 << 4)
 
 #define PRIV_FLAG_NEW_ATTRS		(1 << 0)
 
@@ -42,7 +45,48 @@ struct bridge_data
 	uint32_t		b_flags;
 	uint32_t		b_flags_mask;
 	uint32_t                ce_mask; /* HACK to support attr macros */
+	struct bridge_vlan	vlan_info;
 };
+
+static void set_bit(unsigned nr, unsigned long *addr)
+{
+	unsigned long mask, *p;
+
+	if (nr < VLAN_N_VID) {
+		mask = (1UL << (nr % BITS_PER_LONG));
+		p = addr + nr / BITS_PER_LONG;
+		*p |= mask;
+	}
+}
+
+#if 0
+static void clear_bit(unsigned nr, unsigned long *addr)
+{
+	unsigned long mask, *p;
+
+	if (nr < VLAN_N_VID) {
+		mask = (1UL << (nr % BITS_PER_LONG));
+		p = addr + nr / BITS_PER_LONG;
+		*p &= ~mask;
+	}
+}
+#endif
+
+static int find_next_bit(int i, unsigned long x)
+{
+	int j;
+
+	if (i >= (int) sizeof(x) * 8)
+		return -1;
+
+	/* find first bit */
+	if (i < 0)
+		return __builtin_ffsl(x);
+
+	/* mask off prior finds to get next */
+	j = __builtin_ffsl(x >> i);
+	return j ? j += i : 0;
+}
 
 static struct rtnl_link_af_ops bridge_ops;
 
@@ -141,6 +185,112 @@ static int bridge_parse_protinfo(struct rtnl_link *link, struct nlattr *attr,
 	return 0;
 }
 
+static int bridge_parse_af(struct rtnl_link *link, struct nlattr *attr,
+			   void *data)
+{
+	struct bridge_data *bd = data;
+	struct bridge_vlan_info *vinfo = NULL;
+
+	if (nla_type(attr) != IFLA_BRIDGE_VLAN_INFO)
+		return 0;
+
+	if (nla_len(attr) != sizeof(struct bridge_vlan_info))
+		return -EINVAL;
+
+	vinfo = nla_data(attr);
+	if (!vinfo->vid || vinfo->vid >= VLAN_VID_MASK)
+		return -EINVAL;
+
+	if (vinfo->flags & BRIDGE_VLAN_INFO_RANGE_BEGIN) {
+		NL_DBG(1, "Unexpected BRIDGE_VLAN_INFO_RANGE_BEGIN flag; can not handle it.\n");
+		return -EINVAL;
+	}
+
+	if (vinfo->flags & BRIDGE_VLAN_INFO_PVID)
+		bd->vlan_info.pvid = vinfo->vid;
+
+	if (vinfo->flags & BRIDGE_VLAN_INFO_UNTAGGED)
+		set_bit(vinfo->vid, bd->vlan_info.untagged_bitmap);
+
+	set_bit(vinfo->vid, bd->vlan_info.vlan_bitmap);
+
+	bd->ce_mask |= BRIDGE_ATTR_PORT_VLAN;
+
+	return 0;
+}
+
+static int bridge_get_af(struct nl_msg *msg)
+{
+	__u32 ext_filter_mask = RTEXT_FILTER_BRVLAN;
+
+	return nla_put(msg, IFLA_EXT_MASK, sizeof(ext_filter_mask), &ext_filter_mask);
+}
+
+static void walk_bitmap(struct nl_dump_params *p, unsigned long *b, int nr)
+{
+	int i = -1, j, k;
+	int start = -1, prev = -1;
+	int done, found = 0;
+
+	for (k = 0; k < nr; k++) {
+		int base_bit;
+		unsigned long a = b[k];
+
+		base_bit = k * BITS_PER_LONG;
+		i = -1;
+		done = 0;
+		while (!done) {
+			j = find_next_bit(i, a);
+			if (j > 0) {
+				/* first hit of any bit */
+				if (start < 0 && prev < 0) {
+					start = prev = j - 1 + base_bit;
+					goto next;
+				}
+				/* this bit is a continuation of prior bits */
+				if (j - 2 + base_bit == prev) {
+					prev++;
+					goto next;
+				}
+			} else
+				done = 1;
+
+			if (start >= 0) {
+				found++;
+				if (done && k < nr - 1)
+					break;
+
+				nl_dump(p, " %d", start);
+				if (start != prev)
+					nl_dump(p, "-%d", prev);
+
+				if (done)
+					break;
+			}
+			if (j > 0)
+				start = prev = j - 1 + base_bit;
+next:
+			i = j;
+		}
+	}
+	if (!found)
+		nl_dump(p, " <none>");
+
+	return;
+}
+
+static void rtnl_link_bridge_dump_vlans(struct nl_dump_params *p,
+					struct bridge_data *bd)
+{
+	nl_dump(p, "pvid %u", bd->vlan_info.pvid);
+
+	nl_dump(p, "   all vlans:");
+	walk_bitmap(p, &bd->vlan_info.vlan_bitmap[0], BR_VLAN_BITMAP_LEN);
+
+	nl_dump(p, "   untagged vlans:");
+	walk_bitmap(p, &bd->vlan_info.untagged_bitmap[0], BR_VLAN_BITMAP_LEN);
+}
+
 static void bridge_dump_details(struct rtnl_link *link,
 				struct nl_dump_params *p, void *data)
 {
@@ -157,6 +307,17 @@ static void bridge_dump_details(struct rtnl_link *link,
 	if (bd->ce_mask & BRIDGE_ATTR_COST)
 		nl_dump(p, "cost %u ", bd->b_cost);
 
+	if (bd->ce_mask & BRIDGE_ATTR_PORT_VLAN)
+		rtnl_link_bridge_dump_vlans(p, bd);
+
+	if (bd->ce_mask & BRIDGE_ATTR_FLAGS) {
+		char buf[256];
+
+		rtnl_link_bridge_flags2str(bd->b_flags & bd->b_flags_mask,
+					   buf, sizeof(buf));
+		nl_dump(p, "%s", buf);
+	}
+
 	nl_dump(p, "\n");
 }
 
@@ -171,6 +332,8 @@ static int bridge_compare(struct rtnl_link *_a, struct rtnl_link *_b,
 	diff |= BRIDGE_DIFF(PORT_STATE,	a->b_port_state != b->b_port_state);
 	diff |= BRIDGE_DIFF(PRIORITY, a->b_priority != b->b_priority);
 	diff |= BRIDGE_DIFF(COST, a->b_cost != b->b_cost);
+	diff |= BRIDGE_DIFF(PORT_VLAN, memcmp(&a->vlan_info, &b->vlan_info,
+					      sizeof(struct bridge_vlan)));
 
 	if (flags & LOOSE_COMPARISON)
 		diff |= BRIDGE_DIFF(FLAGS,
@@ -503,6 +666,54 @@ int rtnl_link_bridge_str2flags(const char *name)
 
 /** @} */
 
+int rtnl_link_bridge_pvid(struct rtnl_link *link)
+{
+	struct bridge_data *bd;
+
+	IS_BRIDGE_LINK_ASSERT(link);
+
+	bd = link->l_af_data[AF_BRIDGE];
+	if (bd->ce_mask & BRIDGE_ATTR_PORT_VLAN)
+		return (int) bd->vlan_info.pvid;
+
+	return -EINVAL;
+}
+
+int rtnl_link_bridge_has_vlan(struct rtnl_link *link)
+{
+	struct bridge_data *bd;
+	int i;
+
+	IS_BRIDGE_LINK_ASSERT(link);
+
+	bd = link->l_af_data[AF_BRIDGE];
+	if (bd->ce_mask & BRIDGE_ATTR_PORT_VLAN) {
+		if (bd->vlan_info.pvid)
+			return 1;
+
+		for (i = 0; i < BR_VLAN_BITMAP_LEN; ++i) {
+			if (bd->vlan_info.vlan_bitmap[i] ||
+			    bd->vlan_info.untagged_bitmap[i])
+				return 1;
+		}
+	}
+	return 0;
+}
+
+struct bridge_vlan *rtnl_link_bridge_get_port_vlan(struct rtnl_link *link)
+{
+	struct bridge_data *data;
+
+	if (!rtnl_link_is_bridge(link))
+		return NULL;
+
+	data = link->l_af_data[AF_BRIDGE];
+	if (data && (data->ce_mask & BRIDGE_ATTR_PORT_VLAN))
+		return &data->vlan_info;
+
+	return NULL;
+}
+
 static struct rtnl_link_af_ops bridge_ops = {
 	.ao_family			= AF_BRIDGE,
 	.ao_alloc			= &bridge_alloc,
@@ -511,6 +722,8 @@ static struct rtnl_link_af_ops bridge_ops = {
 	.ao_parse_protinfo		= &bridge_parse_protinfo,
 	.ao_dump[NL_DUMP_DETAILS]	= &bridge_dump_details,
 	.ao_compare			= &bridge_compare,
+	.ao_parse_af			= &bridge_parse_af,
+	.ao_get_af			= &bridge_get_af,
 };
 
 static void __init bridge_init(void)
