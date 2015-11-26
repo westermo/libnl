@@ -967,6 +967,36 @@ int rtnl_link_bridge_vlan_get(struct rtnl_link *link, int vid,
 	return 0;
 }
 
+/**
+ * Get a port's PVID
+ * @arg link		Link object of type bridge
+ * @arg vlan		Returned VLAN info
+ *
+ * @return 0 on success, negative error code otherwise
+ * @retval -NLE_NODEV port has no PVID
+ */
+int rtnl_link_bridge_vlan_get_pvid(struct rtnl_link *link, struct bridge_vlan_info *vlan)
+{
+	struct bridge_data *bd = bridge_data(link);
+	struct bridge_vlan_info tmp;
+	int vid;
+
+	IS_BRIDGE_LINK_ASSERT(link);
+
+	for (vid = 0; vid < RTNL_LINK_BRIDGE_VLAN_BITMAP_MAX; vid++) {
+		if (!vlan_field_get(bd->vlan_info.vlan_bitmap, vid))
+			continue;
+
+		rtnl_link_bridge_vlan_get(link, vid, &tmp);
+		if (tmp.flags & BRIDGE_VLAN_INFO_PVID) {
+			memcpy (vlan, &tmp, sizeof(*vlan));
+			return 0;
+		}
+	}
+
+	return -NLE_NODEV;
+}
+
 int rtnl_link_bridge_vlan_foreach(struct rtnl_link *link,
 				  int (*cb)(struct rtnl_link *,
 					    const struct bridge_vlan_info *, void *),
