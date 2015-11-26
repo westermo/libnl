@@ -890,6 +890,7 @@ global:
         rtnl_link_bridge_vlan_add;
         rtnl_link_bridge_vlan_del;
         rtnl_link_bridge_vlan_flush;
+	rtnl_link_bridge_vlan_get_pvid;
         rtnl_link_build_add_request;
         rtnl_link_team_add;
         rtnl_link_delete_af;

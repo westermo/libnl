@@ -52,6 +52,8 @@ extern int	rtnl_link_bridge_vlan_add(struct rtnl_link *link,
 			      struct bridge_vlan_info *vlan);
 extern int	rtnl_link_bridge_vlan_get(struct rtnl_link *link, int vid,
 			      struct bridge_vlan_info *vlan);
+extern int      rtnl_link_bridge_vlan_get_pvid(struct rtnl_link *link,
+                                               struct bridge_vlan_info *vlan);
 extern int	rtnl_link_bridge_vlan_foreach(struct rtnl_link *link,
 					      int (*cb)(struct rtnl_link *,
 							const struct bridge_vlan_info *, void *),
