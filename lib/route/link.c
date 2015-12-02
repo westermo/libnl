@@ -669,9 +669,9 @@ static int link_msg_parser(struct nl_cache_ops *ops, struct sockaddr_nl *who,
 			err = parse_af_spec_unspec(link, tb[IFLA_AF_SPEC]);
 			break;
 		default:
-			err = -EINVAL;
-			NL_DBG(1, "IFLA_AF_SPEC parsing not implemented for family %d\n",
-				family);
+			NL_DBG(3, "IFLA_AF_SPEC parsing not implemented for family %d\n",
+			          family);
+			break;
 		}
 		if (err)
 			goto errout;
