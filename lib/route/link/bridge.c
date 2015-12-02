@@ -167,7 +167,7 @@ static int bridge_parse_protinfo(struct rtnl_link *link, struct nlattr *attr,
 	return 0;
 }
 
-static int bridge_parse_af_full(struct rtnl_link *link, struct nlattr *attr,
+static int bridge_parse_af_full(struct rtnl_link *link, struct nlattr *attr_full,
                                 void *data)
 {
 	struct bridge_data *bd = data;
@@ -175,18 +175,18 @@ static int bridge_parse_af_full(struct rtnl_link *link, struct nlattr *attr,
 	uint16_t vid_range_start = 0;
 	uint16_t vid_range_flags = -1;
 
-	struct nlattr *af_attr;
+	struct nlattr *attr;
 	int remaining;
 
-	nla_for_each_nested(af_attr, attr, remaining) {
+	nla_for_each_nested(attr, attr_full, remaining) {
 
-		if (nla_type(af_attr) != IFLA_BRIDGE_VLAN_INFO)
+		if (nla_type(attr) != IFLA_BRIDGE_VLAN_INFO)
 			continue;
 
-		if (nla_len(af_attr) != sizeof(struct bridge_vlan_info))
+		if (nla_len(attr) != sizeof(struct bridge_vlan_info))
 			return -EINVAL;
 
-		vinfo = nla_data(af_attr);
+		vinfo = nla_data(attr);
 		if (!vinfo->vid || vinfo->vid >= VLAN_VID_MASK)
 			return -EINVAL;
 
