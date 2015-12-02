@@ -45,38 +45,20 @@ struct bridge_data
 	uint32_t		b_flags;
 	uint32_t		b_flags_mask;
 	uint32_t                ce_mask; /* HACK to support attr macros */
-	struct bridge_vlan	vlan_info;
+	struct rtnl_link_bridge_vlan vlan_info;
 };
 
-static void set_bit(unsigned nr, unsigned long *addr)
+static void set_bit(unsigned nr, uint32_t *addr)
 {
-	unsigned long mask, *p;
-
-	if (nr < VLAN_N_VID) {
-		mask = (1UL << (nr % BITS_PER_LONG));
-		p = addr + nr / BITS_PER_LONG;
-		*p |= mask;
-	}
+	if (nr < 4096)
+		addr[nr / 32] |= (((uint32_t) 1) << (nr % 32));
 }
 
-#if 0
-static void clear_bit(unsigned nr, unsigned long *addr)
-{
-	unsigned long mask, *p;
-
-	if (nr < VLAN_N_VID) {
-		mask = (1UL << (nr % BITS_PER_LONG));
-		p = addr + nr / BITS_PER_LONG;
-		*p &= ~mask;
-	}
-}
-#endif
-
-static int find_next_bit(int i, unsigned long x)
+static int find_next_bit(int i, uint32_t x)
 {
 	int j;
 
-	if (i >= (int) sizeof(x) * 8)
+	if (i >= 32)
 		return -1;
 
 	/* find first bit */
@@ -85,7 +67,7 @@ static int find_next_bit(int i, unsigned long x)
 
 	/* mask off prior finds to get next */
 	j = __builtin_ffsl(x >> i);
-	return j ? j += i : 0;
+	return j ? j + i : 0;
 }
 
 static struct rtnl_link_af_ops bridge_ops;
@@ -226,17 +208,18 @@ static int bridge_get_af(struct nl_msg *msg)
 	return nla_put(msg, IFLA_EXT_MASK, sizeof(ext_filter_mask), &ext_filter_mask);
 }
 
-static void walk_bitmap(struct nl_dump_params *p, unsigned long *b, int nr)
+static void dump_bitmap(struct nl_dump_params *p, const uint32_t *b)
 {
 	int i = -1, j, k;
 	int start = -1, prev = -1;
 	int done, found = 0;
+#define BR_VLAN_BITMAP_LEN (4096 / 32)
 
-	for (k = 0; k < nr; k++) {
+	for (k = 0; k < BR_VLAN_BITMAP_LEN; k++) {
 		int base_bit;
-		unsigned long a = b[k];
+		uint32_t a = b[k];
 
-		base_bit = k * BITS_PER_LONG;
+		base_bit = k * 32;
 		i = -1;
 		done = 0;
 		while (!done) {
@@ -257,7 +240,7 @@ static void walk_bitmap(struct nl_dump_params *p, unsigned long *b, int nr)
 
 			if (start >= 0) {
 				found++;
-				if (done && k < nr - 1)
+				if (done && k < BR_VLAN_BITMAP_LEN - 1)
 					break;
 
 				nl_dump(p, " %d", start);
@@ -285,10 +268,10 @@ static void rtnl_link_bridge_dump_vlans(struct nl_dump_params *p,
 	nl_dump(p, "pvid %u", bd->vlan_info.pvid);
 
 	nl_dump(p, "   all vlans:");
-	walk_bitmap(p, &bd->vlan_info.vlan_bitmap[0], BR_VLAN_BITMAP_LEN);
+	dump_bitmap(p, bd->vlan_info.vlan_bitmap);
 
 	nl_dump(p, "   untagged vlans:");
-	walk_bitmap(p, &bd->vlan_info.untagged_bitmap[0], BR_VLAN_BITMAP_LEN);
+	dump_bitmap(p, bd->vlan_info.untagged_bitmap);
 }
 
 static void bridge_dump_details(struct rtnl_link *link,
@@ -333,7 +316,7 @@ static int bridge_compare(struct rtnl_link *_a, struct rtnl_link *_b,
 	diff |= BRIDGE_DIFF(PRIORITY, a->b_priority != b->b_priority);
 	diff |= BRIDGE_DIFF(COST, a->b_cost != b->b_cost);
 	diff |= BRIDGE_DIFF(PORT_VLAN, memcmp(&a->vlan_info, &b->vlan_info,
-					      sizeof(struct bridge_vlan)));
+					      sizeof(struct rtnl_link_bridge_vlan)));
 
 	if (flags & LOOSE_COMPARISON)
 		diff |= BRIDGE_DIFF(FLAGS,
@@ -700,7 +683,7 @@ int rtnl_link_bridge_has_vlan(struct rtnl_link *link)
 	return 0;
 }
 
-struct bridge_vlan *rtnl_link_bridge_get_port_vlan(struct rtnl_link *link)
+struct rtnl_link_bridge_vlan *rtnl_link_bridge_get_port_vlan(struct rtnl_link *link)
 {
 	struct bridge_data *data;
 

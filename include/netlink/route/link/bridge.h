@@ -19,20 +19,11 @@
 extern "C" {
 #endif
 
-/* maximum vlan id */
-#define VLAN_N_VID		4096
-
-#define BITS_PER_BYTE		8
-#define BITS_PER_LONG		(BITS_PER_BYTE * sizeof(unsigned long))
-#define DIV_ROUND_UP(n,d)	(((n) + (d) - 1) / (d))
-#define BITS_TO_LONGS(nr)	DIV_ROUND_UP(nr, BITS_PER_LONG)
-#define BR_VLAN_BITMAP_LEN	BITS_TO_LONGS(VLAN_N_VID)
-
-struct bridge_vlan
+struct rtnl_link_bridge_vlan
 {
 	uint16_t                pvid;
-	unsigned long           vlan_bitmap[BR_VLAN_BITMAP_LEN];
-	unsigned long           untagged_bitmap[BR_VLAN_BITMAP_LEN];
+	uint32_t                vlan_bitmap[4096 / 32];
+	uint32_t                untagged_bitmap[4096 / 32];
 };
 
 /**
