@@ -677,8 +677,8 @@ static int link_request_update(struct nl_cache *cache, struct nl_sock *sk)
 			goto nla_put_failure;
 	}
 	err = nl_send_auto(sk, msg);
-
-        return err >= 0 ? 0 : err;
+	if (err > 0)
+		err = 0;
 
 nla_put_failure:
 	nlmsg_free(msg);
