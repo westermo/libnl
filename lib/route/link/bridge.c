@@ -167,8 +167,8 @@ static int bridge_parse_protinfo(struct rtnl_link *link, struct nlattr *attr,
 	return 0;
 }
 
-static int bridge_parse_af(struct rtnl_link *link, struct nlattr *attr,
-			   void *data)
+static int bridge_parse_af_full(struct rtnl_link *link, struct nlattr *attr,
+                                void *data)
 {
 	struct bridge_data *bd = data;
 	struct bridge_vlan_info *vinfo = NULL;
@@ -771,7 +771,7 @@ static struct rtnl_link_af_ops bridge_ops = {
 	.ao_parse_protinfo		= &bridge_parse_protinfo,
 	.ao_dump[NL_DUMP_DETAILS]	= &bridge_dump_details,
 	.ao_compare			= &bridge_compare,
-	.ao_parse_af_full		= &bridge_parse_af,
+	.ao_parse_af_full		= &bridge_parse_af_full,
 	.ao_get_af			= &bridge_get_af,
 };
 
