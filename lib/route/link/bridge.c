@@ -222,49 +222,6 @@ static int bridge_parse_af_full(struct rtnl_link *link, struct nlattr *attr,
 	}
 
 	return 0;
-
-
-
-	if (nla_type(attr) != IFLA_BRIDGE_VLAN_INFO)
-		return 0;
-
-	if (nla_len(attr) != sizeof(struct bridge_vlan_info))
-		return -EINVAL;
-
-	vinfo = nla_data(attr);
-	if (!vinfo->vid || vinfo->vid >= VLAN_VID_MASK)
-		return -EINVAL;
-
-	if (vinfo->flags & BRIDGE_VLAN_INFO_RANGE_BEGIN) {
-		vid_range_start = vinfo->vid;
-		vid_range_flags = (vinfo->flags ^ BRIDGE_VLAN_INFO_RANGE_BEGIN);
-		return 0;
-	}
-
-	if (vinfo->flags & BRIDGE_VLAN_INFO_RANGE_END) {
-		/* sanity check the range flags */
-		if (vid_range_flags != (vinfo->flags ^ BRIDGE_VLAN_INFO_RANGE_END)) {
-			NL_DBG(1, "VLAN range flags differ; can not handle it.\n");
-			return -EINVAL;
-		}
-	} else {
-		vid_range_start = vinfo->vid;
-	}
-
-	for (; vid_range_start <= vinfo->vid; vid_range_start++) {
-		if (vinfo->flags & BRIDGE_VLAN_INFO_PVID)
-			bd->vlan_info.pvid = vinfo->vid;
-
-		if (vinfo->flags & BRIDGE_VLAN_INFO_UNTAGGED)
-			set_bit(vid_range_start, bd->vlan_info.untagged_bitmap);
-
-		set_bit(vid_range_start, bd->vlan_info.vlan_bitmap);
-	}
-
-	vid_range_flags = -1;
-	bd->ce_mask |= BRIDGE_ATTR_PORT_VLAN;
-
-	return 0;
 }
 
 static int bridge_get_af(struct nl_msg *msg)
