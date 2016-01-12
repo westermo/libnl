@@ -434,11 +434,26 @@ errout:
 	return err;
 }
 
-static int neigh_request_update(struct nl_cache *c, struct nl_sock *h)
+/* Cannot use use nl_rtgen_request() since the kernel rtnl_fdb_dump()
+ * expects a struct ifinfomsg size payload.
+ *
+ * XXX: Add support for appending br_idx, as U32 IFLA_MASTER, to nlmsg
+ *      to cache only neigh entries from a given bridge.
+ * XXX: Also add support for caching entries from a given brport, send
+ *      as .ifi_index.
+ */
+static int neigh_request_update(struct nl_cache *c, struct nl_sock *sk)
 {
-	int family = c->c_iarg1;
+	int err;
+	struct ifinfomsg ifi = {
+		.ifi_family = c->c_iarg1,
+	};
 
-	return nl_rtgen_request(h, RTM_GETNEIGH, family, NLM_F_DUMP);
+	err = nl_send_simple(sk, RTM_GETNEIGH, NLM_F_DUMP, &ifi, sizeof(ifi));
+	if (err < 0)
+		return err;
+
+	return 0;
 }
 
 
