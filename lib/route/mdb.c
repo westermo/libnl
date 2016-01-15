@@ -476,6 +476,8 @@ static int mdb_msg_parser(struct nl_cache_ops *ops, struct sockaddr_nl *who,
 			struct rtnl_mgport *mgprt;
 			int family;
 			int rem_mdb_entry_len;
+			int found_old_grp = 0;
+			struct rtnl_mgrp *old_mgrp = NULL;
 
 			nla_for_each_nested(mi, me, rem_mdb_entry_len) {
 				bm = nla_data(mi);
@@ -499,9 +501,19 @@ static int mdb_msg_parser(struct nl_cache_ops *ops, struct sockaddr_nl *who,
 					return -NLE_NOMEM;
 				}
 				mgprt->m_grpifindex = bm->ifindex;
-				/* Add multicast group
+				/* Find the new group in the old multicast group list
+				 * Add multicast group if not present
 				 */
-				rtnl_mdb_add_mgrp(mdb, mgrp);
+				nl_list_for_each_entry(old_mgrp, &mdb->m_grps, grp_list) {
+					if (!nl_addr_cmp(old_mgrp->addr, mgrp->addr)) {
+						found_old_grp = 1;
+						rtnl_mdb_mgrp_free(mgrp);
+						mgrp = old_mgrp;
+						break;
+					}
+				}
+				if (!found_old_grp)
+					rtnl_mdb_add_mgrp(mdb, mgrp);
 				/* Add multicast group port
 				 */
 				rtnl_mdb_add_mgport(mgrp, mgprt);
