@@ -181,12 +181,14 @@ struct br_mdb_entry {
 	__u32 ifindex;
 #define MDB_TEMPORARY 0
 #define MDB_PERMANENT 1
+#define MDB_STATE_MGMT		(1 << 7)
 	__u8 state;
 	__u16 vid;
 	struct {
 		union {
 			__be32	ip4;
 			struct in6_addr ip6;
+			__u8 mac[ETH_ALEN];
 		} u;
 		__be16		proto;
 	} addr;

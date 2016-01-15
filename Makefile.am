@@ -108,7 +108,8 @@ libnlinclude_netlink_route_HEADERS = \
 	include/netlink/route/rtnl.h \
 	include/netlink/route/rule.h \
 	include/netlink/route/tc-api.h \
-	include/netlink/route/tc.h
+	include/netlink/route/tc.h \
+	include/netlink/route/mdb.h
 libnlinclude_netlink_route_actdir = $(libnlincludedir)/netlink/route/act
 libnlinclude_netlink_route_act_HEADERS = \
 	include/netlink/route/act/gact.h \
@@ -416,6 +417,7 @@ lib_libnl_route_3_la_SOURCES = \
 	lib/route/rtnl.c \
 	lib/route/rule.c \
 	lib/route/tc.c \
+	lib/route/mdb.c \
 	$(NULL)
 nodist_lib_libnl_route_3_la_SOURCES = \
 	$(grammar_files_sources)

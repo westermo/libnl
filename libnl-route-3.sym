@@ -1072,4 +1072,50 @@ global:
 	rtnl_route_set_ttl_propagate;
 	rtnl_route_get_ttl_propagate;
 	rtnl_route_nh_encap_mpls;
+
+	rtnl_mdb_alloc_cache;
+	rtnl_mdb_get_by_ifi;
+	rtnl_mdb_alloc;
+	rtnl_mdb_put;
+	rtnl_mdb_set_brifindex;
+	rtnl_mdb_get_brifindex;
+	rtnl_mdb_set_vid;
+	rtnl_mdb_get_vid;
+	rtnl_mdb_get_family;
+	rtnl_mdb_add_mrport;
+	rtnl_mdb_del_mrport;
+	rtnl_mdb_get_num_mrport;
+	rtnl_mdb_mrport_n;
+	rtnl_mdb_foreach_mrport;
+	rtnl_mdb_add_mgrp;
+	rtnl_mdb_del_mgrp;
+	rtnl_mdb_mgrp_n;
+	rtnl_mdb_get_num_mgrp;
+	rtnl_mdb_foreach_mgrp;
+	rtnl_mdb_add_group;
+	rtnl_mdb_del_group;
+
+	rtnl_mgrp_alloc;
+	rtnl_mgrp_free;
+	rtnl_mgrp_add_mgport;
+	rtnl_mgrp_del_mgport;
+	rtnl_mgrp_free_mgports;
+	rtnl_mgrp_get_num_mgport;
+	rtnl_mgrp_foreach_mgport;
+	rtnl_mgrp_mgport_n;
+	rtnl_mgrp_set_ipaddr;
+	rtnl_mgrp_get_ipaddr;
+	rtnl_mgrp_set_macaddr;
+	rtnl_mgrp_get_macaddr;
+	rtnl_mgrp_set_vid;
+	rtnl_mgrp_get_vid;
+
+	rtnl_mgport_alloc;
+	rtnl_mgport_free;
+	rtnl_mgport_set_ifi;
+	rtnl_mgport_get_ifi;
+
+	rtnl_mrport_alloc;
+	rtnl_mrport_free;
+	rtnl_mrport_get_grpifindex;
 } libnl_3_2_29;

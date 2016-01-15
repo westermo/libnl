@@ -262,6 +262,46 @@ struct rtnl_neigh
 	uint16_t	n_vlan;
 };
 
+/* Multicast router port info
+ */
+struct rtnl_mrport
+{
+	uint32_t mrport_ifi; /* Router port ifindex */
+	struct nl_list_head mrport_entry;
+};
+
+/* Multicast group port info
+ */
+struct rtnl_mgport
+{
+        uint32_t mgport_ifi; /* Group port ifindex */
+        struct nl_list_head mgport_entry;
+};
+
+/* L2 Multicast group info
+ */
+struct rtnl_mgrp
+{
+	struct nl_addr         *addr; /* IPv4/IPv6 addr */
+	int                     proto; /* ETH_P_IP/IPV6, ETH_P_ALL */
+	int                     vid;
+	struct nl_list_head     mgrp_entry;
+	uint32_t		num_mgport; /* Num of Group ports */
+	struct nl_list_head	mgport_list; /* List of Group ports */
+};
+
+/* L2 Multicast database for igmp snooping
+ */
+struct rtnl_mdb
+{
+	NLHDR_COMMON
+	uint32_t	m_family;
+	uint32_t	m_brifindex; /* Bridge ifindex */
+	uint32_t		num_mgrp; /* Num of Groups */
+	struct nl_list_head	mgrp_list; /* List of Groups */
+	uint32_t		num_mrport; /* Num of Router ports */
+	struct nl_list_head	mrport_list; /* List of Router ports */
+};
 
 struct rtnl_addr_cacheinfo
 {
