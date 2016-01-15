@@ -104,7 +104,8 @@ nobase_libnlinclude_HEADERS = \
 	netlink/xfrm/sa.h \
 	netlink/xfrm/selector.h \
 	netlink/xfrm/sp.h \
-	netlink/xfrm/template.h
+	netlink/xfrm/template.h \
+	netlink/route/mdb.h
 
 if ENABLE_CLI
 nobase_libnlinclude_HEADERS += \
