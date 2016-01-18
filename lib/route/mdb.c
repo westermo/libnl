@@ -19,6 +19,11 @@
 static struct nl_cache_ops rtnl_mdb_ops;
 static struct nl_object_ops mdb_obj_ops;
 
+int rtnl_mdb_alloc_cache(struct nl_sock *sock, struct nl_cache **result)
+{
+	return nl_cache_alloc_and_fill(&rtnl_mdb_ops, sock, result);
+}
+
 /* Initalize mdb info
  */
 static void mdb_constructor(struct nl_object *c)
