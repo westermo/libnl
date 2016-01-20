@@ -936,4 +936,10 @@ global:
         rtnl_mrport_get_rpifindex;
         rtnl_mdb_get_nr_grps;
         rtnl_mdb_get_grpifindex;
+
+        rtnl_mdb_set_brifindex;
+        rtnl_mdb_set_ipaddr;
+        rtnl_mdb_set_grpifindex;
+        rtnl_mdb_add_group;
+        rtnl_mdb_del_group;
 } libnl_3_2_27;

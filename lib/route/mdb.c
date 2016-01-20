@@ -434,6 +434,7 @@ static char *mdb_attrs2str(int attrs, char *buf, size_t len)
 			ARRAY_SIZE(mdb_attrs));
 }
 
+
 /* Parse multicast database netlink attributes in messages and allocate
  * appropriate objects
  */
@@ -761,6 +762,13 @@ unsigned int rtnl_mdb_get_brifindex(struct rtnl_mdb *mdb)
 	return mdb->m_brifindex;
 }
 
+/* Set Bridge ifindex
+ */
+void rtnl_mdb_set_brifindex(struct rtnl_mdb *mdb, int ifindex)
+{
+	mdb->m_brifindex = ifindex;
+}
+
 /* Get multicast group ifindex
  */
 unsigned int rtnl_mdb_get_grpifindex(struct rtnl_mgport *mgp)
@@ -768,11 +776,27 @@ unsigned int rtnl_mdb_get_grpifindex(struct rtnl_mgport *mgp)
 	return mgp->m_grpifindex;
 }
 
+/* Set multicast group ifindex
+ */
+void rtnl_mdb_set_grpifindex(struct rtnl_mgport *mgp, int ifindex)
+{
+	mgp->m_grpifindex = ifindex;
+}
+
 /* Get multicast group IP addr
  */
 struct nl_addr *rtnl_mdb_get_ipaddr(struct rtnl_mgrp *mgrp)
 {
 	return mgrp->addr;
+}
+
+/* Set multicast group IP addr
+ */
+void rtnl_mdb_set_ipaddr(struct rtnl_mgrp *mgrp, int ip)
+{
+	mgrp->addr = nl_addr_build(AF_INET,
+				   (unsigned char *)&ip,
+				   sizeof(__be32));
 }
 
 /* Get number of multicast router ports
@@ -913,6 +937,81 @@ void rtnl_mdb_add_mgport(struct rtnl_mgrp *mgrp, struct rtnl_mgport *mgprt)
 void rtnl_mdb_mgport_free(struct rtnl_mgport *mgprt)
 {
 	free(mgprt);
+}
+static int build_mdb_msg(struct rtnl_mdb *mdb, struct rtnl_mgrp *grp, int cmd, int flags,
+			   struct nl_msg **result)
+{
+	struct br_port_msg bpm;
+	struct br_mdb_entry entry;
+	struct rtnl_mgport *port;
+	struct nl_msg *msg;
+
+	memset(&bpm, 0, sizeof(bpm));
+	memset(&entry, 0, sizeof(entry));
+
+	bpm.family = AF_BRIDGE;
+	bpm.ifindex = rtnl_mdb_get_brifindex(mdb);
+	port = rtnl_mdb_mgport_n (grp, 0);
+	if (!port)
+		return -NLE_INVAL;
+
+	entry.ifindex = rtnl_mdb_get_grpifindex(port);
+	entry.addr.u.ip4 = *((int*) nl_addr_get_binary_addr(grp->addr));
+	entry.addr.proto = htons(ETH_P_IP);
+	if (cmd == RTM_NEWMDB)
+		entry.state |= MDB_PERMANENT;
+
+	msg = nlmsg_alloc_simple(cmd, flags);
+	if (!msg)
+		return -NLE_NOMEM;
+
+	if (nlmsg_append(msg, &bpm, sizeof(bpm), NLMSG_ALIGNTO) < 0)
+		goto nla_put_failure;
+	nla_put(msg, MDBA_SET_ENTRY, sizeof(entry), &entry);
+
+	*result = msg;
+	return 0;
+
+nla_put_failure:
+	nlmsg_free(msg);
+	return -NLE_MSGSIZE;
+}
+int rtnl_mdb_build_request(struct rtnl_mdb *mdb, int cmd, struct rtnl_mgrp *grp, int flags,
+				 struct nl_msg **result)
+{
+	return build_mdb_msg(mdb, grp, cmd, flags, result);
+}
+
+int rtnl_mdb_del_group (struct nl_sock *sk, struct rtnl_mdb *mdb, struct rtnl_mgrp *grp, int flags)
+{
+	int err;
+	struct nl_msg *msg;
+
+	if ((err = rtnl_mdb_build_request(mdb, RTM_DELMDB, grp, flags, &msg)) < 0)
+		return err;
+
+	err = nl_send_auto_complete(sk, msg);
+	nlmsg_free(msg);
+	if (err < 0)
+		return err;
+
+	return wait_for_ack(sk);
+}
+
+int rtnl_mdb_add_group (struct nl_sock *sk, struct rtnl_mdb *mdb, struct rtnl_mgrp *grp, int flags)
+{
+	int err;
+	struct nl_msg *msg;
+
+	if ((err = rtnl_mdb_build_request(mdb, RTM_NEWMDB, grp, flags, &msg)) < 0)
+		return err;
+
+	err = nl_send_auto_complete(sk, msg);
+	nlmsg_free(msg);
+	if (err < 0)
+		return err;
+
+	return wait_for_ack(sk);
 }
 
 static struct nl_object_ops mdb_obj_ops = {

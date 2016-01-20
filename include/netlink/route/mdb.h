@@ -53,13 +53,16 @@ struct rtnl_mgport *rtnl_mdb_mgport_clone(struct rtnl_mgport *src);
 struct rtnl_mgrp *rtnl_mdb_mgrp_clone(struct rtnl_mgrp *src);
 unsigned int rtnl_mdb_get_family(struct rtnl_mdb *mdb);
 unsigned int rtnl_mdb_get_brifindex(struct rtnl_mdb *mdb);
-unsigned int rtnl_mdb_get_bpifindex(struct rtnl_mdb *mdb);
-struct nl_addr *rtnl_mdb_get_ipaddr(struct rtnl_mgrp *mdb);
+void rtnl_mdb_set_brifindex(struct rtnl_mdb *mdb, int ifindex);
+struct nl_addr *rtnl_mdb_get_ipaddr(struct rtnl_mgrp *grp);
+void rtnl_mdb_set_ipaddr(struct rtnl_mgrp *grp, int ip);
 unsigned int rtnl_mdb_get_nr_rport(struct rtnl_mdb *mdb);
 unsigned int rtnl_mrport_get_rpifindex(struct rtnl_mrport *mrprt);
 unsigned int rtnl_mdb_get_nr_grps(struct rtnl_mdb *mdb);
 unsigned int rtnl_mdb_get_grpifindex(struct rtnl_mgport *mgp);
-
+void rtnl_mdb_set_grpifindex(struct rtnl_mgport *mgp, int ifindex);
+int rtnl_mdb_add_group (struct nl_sock *sk, struct rtnl_mdb *mdb, struct rtnl_mgrp *grp, int flags);
+int rtnl_mdb_del_group (struct nl_sock *sk, struct rtnl_mdb *mdb, struct rtnl_mgrp *grp, int flags);
 #ifdef __cplusplus
 }
 #endif
