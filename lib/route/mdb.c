@@ -925,6 +925,13 @@ void rtnl_mdb_add_mgport(struct rtnl_mgrp *mgrp, struct rtnl_mgport *mgprt)
 	mgrp->m_ng_port++;
 }
 
+/* Get number of multicast group ports
+ */
+unsigned int rtnl_mdb_get_nr_mgport(struct rtnl_mgrp *mgrp)
+{
+    return mgrp->m_ng_port;
+}
+
 /* Free multicast group port
  */
 void rtnl_mdb_mgport_free(struct rtnl_mgport *mgprt)
