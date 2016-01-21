@@ -41,7 +41,6 @@ static void mdb_free_data(struct nl_object *c)
 	struct rtnl_mdb *mdb = nl_object_priv(c);
 	struct rtnl_mrport *mr, *tmp_mr;
 	struct rtnl_mgrp *mgp, *tmp_mgp;
-	struct rtnl_mgport *mgport, *tmp_mgport;
 
 	if (!mdb)
 		return;
@@ -52,11 +51,6 @@ static void mdb_free_data(struct nl_object *c)
 	}
 
 	nl_list_for_each_entry_safe(mgp, tmp_mgp, &mdb->m_grps, grp_list) {
-		nl_list_for_each_entry_safe(mgport, tmp_mgport,
-							&mgp->m_gport, gport_list) {
-			rtnl_mdb_remove_mgport(mgp, mgport);
-			rtnl_mdb_mgport_free(mgport);
-		}
 		rtnl_mdb_remove_mgrp(mdb, mgp);
 		rtnl_mdb_mgrp_free(mgp);
 	}
@@ -274,7 +268,6 @@ static int mdb_grp_update(struct rtnl_mdb *old_mdb, struct rtnl_mdb *new_mdb,
 {
 	struct rtnl_mgrp *new_mgrp;
 	struct rtnl_mgrp *old_mgrp = NULL;
-	struct rtnl_mgport *old_mgport;
 	int found_old_grp = 0;
 
 	/* Find the first group in the mdb
@@ -315,14 +308,6 @@ static int mdb_grp_update(struct rtnl_mdb *old_mdb, struct rtnl_mdb *new_mdb,
 		break;
 	case RTM_DELMDB : {
 		if (found_old_grp) {
-			/* Remove last group port and group
-			 */
-			old_mgport = rtnl_mdb_mgport_n(old_mgrp, 0);
-			if (old_mgport) {
-				rtnl_mdb_remove_mgport(old_mgrp, old_mgport);
-				NL_DBG(2, "Removed group port %p\n", old_mgport);
-				rtnl_mdb_mgport_free(old_mgport);
-			}
 			rtnl_mdb_remove_mgrp(old_mdb, old_mgrp);
 			NL_DBG(2, "mdb obj %p updated, Removed grp %p\n", old_mdb, old_mgrp);
 			rtnl_mdb_mgrp_free(old_mgrp);
@@ -878,10 +863,18 @@ struct rtnl_mgrp *rtnl_mdb_mgrp_alloc(void)
 
 /* Remove multicast group
  */
-void rtnl_mdb_remove_mgrp(struct rtnl_mdb *mdb, struct rtnl_mgrp *mg)
+void rtnl_mdb_remove_mgrp(struct rtnl_mdb *mdb, struct rtnl_mgrp *mgrp)
 {
+	struct rtnl_mgport *mgport, *tmp_mgport;
+
+	nl_list_for_each_entry_safe(mgport, tmp_mgport,
+				    &mgrp->m_gport, gport_list) {
+		rtnl_mdb_remove_mgport(mgrp, mgport);
+		rtnl_mdb_mgport_free(mgport);
+	}
+
 	mdb->m_nr_grp--;
-	nl_list_del(&mg->grp_list);
+	nl_list_del(&mgrp->grp_list);
 }
 
 /* Add multicast group
