@@ -34,6 +34,7 @@ nobase_libnlinclude_HEADERS = \
 	netlink/route/action.h \
 	netlink/route/act/mirred.h \
 	netlink/route/act/skbedit.h \
+	netlink/route/act/police.h \
 	netlink/route/cls/ematch/cmp.h \
 	netlink/route/cls/ematch/meta.h \
 	netlink/route/cls/ematch/nbyte.h \
