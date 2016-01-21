@@ -940,6 +940,7 @@ global:
         rtnl_mdb_mrport_n;
         rtnl_mdb_mgrp_n;
         rtnl_mdb_mgport_n;
+        rtnl_mdb_get_nr_mgport;
         rtnl_mdb_mrport_clone;
         rtnl_mdb_mgrp_clone;
         rtnl_mdb_get_family;

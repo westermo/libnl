@@ -48,6 +48,7 @@ void rtnl_mdb_foreach_mgport(struct rtnl_mgrp *grp,
 extern struct rtnl_mrport * rtnl_mdb_mrport_n(struct rtnl_mdb *m, int n);
 extern struct rtnl_mgrp *rtnl_mdb_mgrp_n(struct rtnl_mdb *m, int n);
 struct rtnl_mgport *rtnl_mdb_mgport_n(struct rtnl_mgrp *grp, int n);
+unsigned int rtnl_mdb_get_nr_mgport(struct rtnl_mgrp *mgrp);
 struct rtnl_mrport *rtnl_mdb_mrport_clone(struct rtnl_mrport *src);
 struct rtnl_mgport *rtnl_mdb_mgport_clone(struct rtnl_mgport *src);
 struct rtnl_mgrp *rtnl_mdb_mgrp_clone(struct rtnl_mgrp *src);
