@@ -931,12 +931,11 @@ void rtnl_mdb_mgport_free(struct rtnl_mgport *mgprt)
 {
 	free(mgprt);
 }
-static int build_mdb_msg(struct rtnl_mdb *mdb, struct rtnl_mgrp *grp, int cmd, int flags,
+static int build_mdb_msg(struct rtnl_mdb *mdb, struct rtnl_mgrp *grp, int ifindex, int cmd, int flags,
 			   struct nl_msg **result)
 {
 	struct br_port_msg bpm;
 	struct br_mdb_entry entry;
-	struct rtnl_mgport *port;
 	struct nl_msg *msg;
 
 	memset(&bpm, 0, sizeof(bpm));
@@ -944,15 +943,11 @@ static int build_mdb_msg(struct rtnl_mdb *mdb, struct rtnl_mgrp *grp, int cmd, i
 
 	bpm.family = AF_BRIDGE;
 	bpm.ifindex = rtnl_mdb_get_brifindex(mdb);
-	port = rtnl_mdb_mgport_n (grp, 0);
-	if (!port)
-		return -NLE_INVAL;
 
-	entry.ifindex = rtnl_mdb_get_grpifindex(port);
+	entry.ifindex = ifindex;
 	entry.addr.u.ip4 = *((int*) nl_addr_get_binary_addr(grp->addr));
 	entry.addr.proto = htons(ETH_P_IP);
-	if (cmd == RTM_NEWMDB)
-		entry.state |= MDB_PERMANENT;
+        entry.state |= MDB_PERMANENT;
 
 	msg = nlmsg_alloc_simple(cmd, flags);
 	if (!msg)
@@ -969,42 +964,58 @@ nla_put_failure:
 	nlmsg_free(msg);
 	return -NLE_MSGSIZE;
 }
-int rtnl_mdb_build_request(struct rtnl_mdb *mdb, int cmd, struct rtnl_mgrp *grp, int flags,
+static int rtnl_mdb_build_request(struct rtnl_mdb *mdb, int cmd, struct rtnl_mgrp *grp, int ifindex, int flags,
 				 struct nl_msg **result)
 {
-	return build_mdb_msg(mdb, grp, cmd, flags, result);
+	build_mdb_msg(mdb, grp, ifindex, cmd, flags, result);
+	return 0;
 }
 
+/* Remove the group from the MDB
+ */
 int rtnl_mdb_del_group (struct nl_sock *sk, struct rtnl_mdb *mdb, struct rtnl_mgrp *grp, int flags)
 {
 	int err;
 	struct nl_msg *msg;
+	struct rtnl_mgport *port;
+	int i = 0;
 
-	if ((err = rtnl_mdb_build_request(mdb, RTM_DELMDB, grp, flags, &msg)) < 0)
-		return err;
+	for (port = rtnl_mdb_mgport_n (grp, i); port; port = rtnl_mdb_mgport_n (grp, ++i)) {
+		if ((err = rtnl_mdb_build_request(mdb, RTM_DELMDB, grp, rtnl_mdb_get_grpifindex(port), flags, &msg)) < 0)
+			continue;
 
-	err = nl_send_auto_complete(sk, msg);
-	nlmsg_free(msg);
-	if (err < 0)
-		return err;
+		err = nl_send_auto_complete(sk, msg);
+		nlmsg_free(msg);
+		if (err < 0)
+			continue;
 
-	return wait_for_ack(sk);
+		wait_for_ack(sk);
+	}
+
+        return 0;
 }
-
+/* Add the group to the MDB
+ */
 int rtnl_mdb_add_group (struct nl_sock *sk, struct rtnl_mdb *mdb, struct rtnl_mgrp *grp, int flags)
 {
 	int err;
 	struct nl_msg *msg;
+	struct rtnl_mgport *port;
+	int i = 0;
 
-	if ((err = rtnl_mdb_build_request(mdb, RTM_NEWMDB, grp, flags, &msg)) < 0)
-		return err;
+	for (port = rtnl_mdb_mgport_n (grp, i); port; port = rtnl_mdb_mgport_n (grp, ++i)) {
+		if ((err = rtnl_mdb_build_request(mdb, RTM_NEWMDB, grp, rtnl_mdb_get_grpifindex(port), flags, &msg)) < 0)
+			continue;
 
-	err = nl_send_auto_complete(sk, msg);
-	nlmsg_free(msg);
-	if (err < 0)
-		return err;
+		err = nl_send_auto_complete(sk, msg);
+		nlmsg_free(msg);
+		if (err < 0)
+			continue;
 
-	return wait_for_ack(sk);
+		wait_for_ack(sk);
+	}
+
+        return 0;
 }
 
 static struct nl_object_ops mdb_obj_ops = {
