@@ -620,6 +620,11 @@ struct rtnl_skbedit
 	uint16_t	  s_queue_mapping;
 };
 
+struct rtnl_police {
+        struct tc_police  p_police;
+        int               p_conform;
+};
+
 struct rtnl_gact
 {
 	struct tc_gact g_parm;
