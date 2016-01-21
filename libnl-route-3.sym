@@ -894,6 +894,20 @@ global:
         rtnl_link_build_add_request;
         rtnl_link_team_add;
         rtnl_link_delete_af;
+	rtnl_police_set_action;
+	rtnl_police_get_action;
+	rtnl_police_set_burst;
+	rtnl_police_get_burst;
+	rtnl_police_set_mtu;
+	rtnl_police_get_mtu;
+	rtnl_police_set_mpu;
+	rtnl_police_get_mpu;
+	rtnl_police_set_rate;
+	rtnl_police_get_rate;
+	rtnl_police_set_overhead;
+	rtnl_police_get_overhead;
+	rtnl_police_set_linklayer;
+	rntl_police_get_linklayer;
 } libnl_3_2_26;
 
 libnl_3_2_28 {
