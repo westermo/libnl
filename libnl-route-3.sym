@@ -973,6 +973,8 @@ global:
 	rtnl_link_vrf_set_tableid;
 	rtnl_neigh_alloc_cache_flags;
 	rtnl_neigh_ll_get;
+
+	rtnl_route_lookup;
 } libnl_3_2_27;
 
 libnl_3_2_29 {
