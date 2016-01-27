@@ -959,4 +959,6 @@ global:
         rtnl_mdb_set_grpifindex;
         rtnl_mdb_add_group;
         rtnl_mdb_del_group;
+
+	rtnl_route_lookup;
 } libnl_3_2_27;
