@@ -896,6 +896,8 @@ global:
         rtnl_link_delete_af;
 	rtnl_police_set_action;
 	rtnl_police_get_action;
+	rtnl_police_set_bucket;
+	rtnl_police_get_bucket;
 	rtnl_police_set_burst;
 	rtnl_police_get_burst;
 	rtnl_police_set_mtu;

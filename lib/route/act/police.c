@@ -210,8 +210,8 @@ static int police_msg_fill(struct rtnl_tc *tc, void *data, struct nl_msg *msg)
 	if (calc_rate_table(&police->rate, rtab, -1, police->mtu, police->rate.linklayer) < 0)
 		return -NLE_FAILURE;
 
-	NLA_PUT(msg, TCA_POLICE_RATE, 1024, rtab);
 	NLA_PUT(msg, TCA_POLICE_TBF, sizeof(*police), police);
+	NLA_PUT(msg, TCA_POLICE_RATE, 1024, rtab);
 
 	return NLE_SUCCESS;
 
@@ -300,6 +300,44 @@ int rtnl_police_get_action(struct rtnl_act *act)
 		return -NLE_NOMEM;
 
 	return police->action;
+}
+
+/**
+ * Set bucket number for netlink action object
+ * @arg act        Action object
+ * @arg bkt        Bucket number
+ *
+ * Bucket number is highly dependent on underlying hardware.
+ * Bucket should be set only if hardware supports it, otherwise
+ * it won't make any effect.
+ *
+ * @return 0 on success or negative error code in case of an error.
+ */
+int rtnl_police_set_bucket(struct rtnl_act *act, int bkt)
+{
+	struct tc_police *police;
+
+	if (!(police = (struct tc_police *) rtnl_tc_data(TC_CAST(act))))
+		return -NLE_NOMEM;
+
+	if (bkt < 0) {
+		police->bucket = 0;
+		return -NLE_INVAL;
+	}
+
+	police->bucket = bkt;
+
+	return NLE_SUCCESS;
+}
+
+int rtnl_police_get_bucket(struct rtnl_act *act)
+{
+	struct tc_police *police;
+
+	if (!(police = (struct tc_police *) rtnl_tc_data(TC_CAST(act))))
+		return -NLE_NOMEM;
+
+	return police->bucket;
 }
 
 /**

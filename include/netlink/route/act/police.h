@@ -22,6 +22,8 @@ extern "C" {
 
 extern int rtnl_police_set_action(struct rtnl_act *act, int action);
 extern int rtnl_police_get_action(struct rtnl_act *act);
+extern int rtnl_police_set_bucket(struct rtnl_act *act, int bkt);
+extern int rtnl_police_get_bucket(struct rtnl_act *act);
 extern int rtnl_police_set_burst(struct rtnl_act *act, int burst, char *sz);
 extern int rtnl_police_get_burst(struct rtnl_act *act);
 extern int rtnl_police_set_mtu(struct rtnl_act *act, int mtu, char *sz);
