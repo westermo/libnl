@@ -911,6 +911,8 @@ global:
 	rtnl_police_get_overhead;
 	rtnl_police_set_linklayer;
 	rtnl_police_get_linklayer;
+	rtnl_cls_get;
+	rtnl_cls_get_by_prio;
 } libnl_3_2_26;
 
 libnl_3_2_28 {
