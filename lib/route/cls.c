@@ -349,16 +349,19 @@ int rtnl_cls_alloc_cache(struct nl_sock *sk, int ifindex, uint32_t parent,			 st
  * @arg cache           Classifier cache
  * @arg ifindex         Interface index
  * @arg parent          Parent
+ * @arg handle          Handle
  *
  * Searches a classifier cache previously allocated with rtnl_cls_alloc_cache()
- * and searches for a classifier matching the interface index and parent.
+ * and searches for a classifier matching the interface index, parent
+ * and handle.
  *
  * The reference counter is incremented before returning the classifier,
  * therefore the reference must be given back with rtnl_cls_put() after usage.
  *
  * @return Classifier or NULL if no match was found.
  */
-struct rtnl_cls *rtnl_cls_get(struct nl_cache *cache, int ifindex, uint32_t parent)
+struct rtnl_cls *rtnl_cls_get(struct nl_cache *cache, int ifindex, uint32_t parent,
+			      uint32_t handle)
 {
 	struct rtnl_cls *cls;
 
@@ -366,7 +369,8 @@ struct rtnl_cls *rtnl_cls_get(struct nl_cache *cache, int ifindex, uint32_t pare
 		return NULL;
 
 	nl_list_for_each_entry(cls, &cache->c_items, ce_list) {
-		if ((cls->c_parent == parent) && (cls->c_ifindex == ifindex)) {
+		if ((cls->c_parent == parent) && (cls->c_ifindex == ifindex)
+		    && (cls->c_handle == handle)) {
 			nl_object_get((struct nl_object *) cls);
 			return cls;
 		}
