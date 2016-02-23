@@ -244,8 +244,9 @@ struct rtnl_mgport
  */
 struct rtnl_mgrp
 {
-	struct nl_addr *addr; /* IPv4/IPv6 addr */
-	struct nl_list_head grp_list;
+	struct nl_addr         *addr; /* IPv4/IPv6 addr */
+	int                     vid;
+	struct nl_list_head     grp_list;
 	uint32_t		m_ng_port; /* Num of Group ports */
 	struct nl_list_head	m_gport; /* List of Group ports */
 };

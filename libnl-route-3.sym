@@ -954,6 +954,8 @@ global:
         rtnl_mrport_get_rpifindex;
         rtnl_mdb_get_nr_grps;
         rtnl_mdb_get_grpifindex;
+        rtnl_mdb_set_vid;
+        rtnl_mdb_get_vid;
 
         rtnl_mdb_set_brifindex;
         rtnl_mdb_set_ipaddr;

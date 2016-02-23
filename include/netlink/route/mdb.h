@@ -62,6 +62,8 @@ unsigned int rtnl_mrport_get_rpifindex(struct rtnl_mrport *mrprt);
 unsigned int rtnl_mdb_get_nr_grps(struct rtnl_mdb *mdb);
 unsigned int rtnl_mdb_get_grpifindex(struct rtnl_mgport *mgp);
 void rtnl_mdb_set_grpifindex(struct rtnl_mgport *mgp, int ifindex);
+int rtnl_mdb_get_vid(struct rtnl_mgrp *grp);
+void rtnl_mdb_set_vid(struct rtnl_mgrp *grp, int vid);
 int rtnl_mdb_add_group (struct nl_sock *sk, struct rtnl_mdb *mdb, struct rtnl_mgrp *grp, int flags);
 int rtnl_mdb_del_group (struct nl_sock *sk, struct rtnl_mdb *mdb, struct rtnl_mgrp *grp, int flags);
 #ifdef __cplusplus
