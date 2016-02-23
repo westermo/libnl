@@ -279,7 +279,7 @@ static int mdb_grp_update(struct rtnl_mdb *old_mdb, struct rtnl_mdb *new_mdb,
 	/* Find the new group in the old multicast group list
 	 */
 	nl_list_for_each_entry(old_mgrp, &old_mdb->m_grps, grp_list) {
-		if (!nl_addr_cmp(old_mgrp->addr, new_mgrp->addr)) {
+		if (!nl_addr_cmp(old_mgrp->addr, new_mgrp->addr) && (old_mgrp->vid == new_mgrp->vid)) {
 			found_old_grp = 1;
 			break;
 		}
@@ -486,6 +486,7 @@ static int mdb_msg_parser(struct nl_cache_ops *ops, struct sockaddr_nl *who,
 						(unsigned char *)&bm->addr.u,
 						family==AF_INET ?
 						sizeof(__be32):sizeof(struct in6_addr));
+				mgrp->vid = bm->vid;
 				mgprt = rtnl_mdb_mgport_alloc();
 				if (!mgprt) {
 					rtnl_mdb_mgrp_free(mgrp);
@@ -496,7 +497,7 @@ static int mdb_msg_parser(struct nl_cache_ops *ops, struct sockaddr_nl *who,
 				 * Add multicast group if not present
 				 */
 				nl_list_for_each_entry(old_mgrp, &mdb->m_grps, grp_list) {
-					if (!nl_addr_cmp(old_mgrp->addr, mgrp->addr)) {
+					if (!nl_addr_cmp(old_mgrp->addr, mgrp->addr) && (old_mgrp->vid == mgrp->vid)) {
 						found_old_grp = 1;
 						rtnl_mdb_mgrp_free(mgrp);
 						mgrp = old_mgrp;
@@ -784,6 +785,19 @@ void rtnl_mdb_set_ipaddr(struct rtnl_mgrp *mgrp, int ip)
 				   sizeof(__be32));
 }
 
+/* Set VLAN for MDB entry
+ */
+void rtnl_mdb_set_vid(struct rtnl_mgrp *mgrp, int vid)
+{
+	mgrp->vid = vid;
+}
+
+/* Get VLAN for MDB entry
+ */
+int rtnl_mdb_get_vid(struct rtnl_mgrp *mgrp)
+{
+	return mgrp->vid;
+}
 /* Get number of multicast router ports
  */
 unsigned int rtnl_mdb_get_nr_rport(struct rtnl_mdb *mdb)
@@ -955,6 +969,8 @@ static int build_mdb_msg(struct rtnl_mdb *mdb, struct rtnl_mgrp *grp, int ifinde
 	entry.addr.u.ip4 = *((int*) nl_addr_get_binary_addr(grp->addr));
 	entry.addr.proto = htons(ETH_P_IP);
         entry.state |= MDB_PERMANENT;
+	if (grp->vid)
+		entry.vid = grp->vid;
 
 	msg = nlmsg_alloc_simple(cmd, flags);
 	if (!msg)
