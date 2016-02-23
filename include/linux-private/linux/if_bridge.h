@@ -10,8 +10,8 @@
  *	2 of the License, or (at your option) any later version.
  */
 
-#ifndef _LINUX_IF_BRIDGE_H
-#define _LINUX_IF_BRIDGE_H
+#ifndef _UAPI_LINUX_IF_BRIDGE_H
+#define _UAPI_LINUX_IF_BRIDGE_H
 
 #include <linux/types.h>
 #include <linux/if_ether.h>
@@ -44,6 +44,8 @@
 #define BRCTL_SET_PORT_PRIORITY 16
 #define BRCTL_SET_PATH_COST 17
 #define BRCTL_GET_FDB_ENTRIES 18
+#define BRCTL_SET_STP_PORT_DIS 19
+#define BRCTL_SET_STP_PORT_ENA 20
 
 #define BR_STATE_DISABLED 0
 #define BR_STATE_LISTENING 1
@@ -127,6 +129,7 @@ enum {
 #define BRIDGE_VLAN_INFO_UNTAGGED	(1<<2)	/* VLAN egresses untagged */
 #define BRIDGE_VLAN_INFO_RANGE_BEGIN	(1<<3) /* VLAN is start of vlan range */
 #define BRIDGE_VLAN_INFO_RANGE_END	(1<<4) /* VLAN is end of vlan range */
+#define BRIDGE_VLAN_INFO_BRENTRY	(1<<5) /* Global bridge VLAN entry */
 
 struct bridge_vlan_info {
 	__u16 flags;
@@ -201,4 +204,4 @@ enum {
 };
 #define MDBA_SET_ENTRY_MAX (__MDBA_SET_ENTRY_MAX - 1)
 
-#endif /* _LINUX_IF_BRIDGE_H */
+#endif /* _UAPI_LINUX_IF_BRIDGE_H */
