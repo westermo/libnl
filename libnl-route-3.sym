@@ -911,6 +911,7 @@ global:
 	rtnl_police_set_linklayer;
 	rntl_police_get_linklayer;
 	rtnl_cls_get;
+	rtnl_qdisc_get_by_kind;
 } libnl_3_2_26;
 
 libnl_3_2_28 {
