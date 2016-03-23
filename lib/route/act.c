@@ -583,6 +583,8 @@ static int act_request_update(struct nl_cache *cache, struct nl_sock *sk)
 		.tca_family = AF_UNSPEC,
 	};
 
+	strncpy(tcahdr.tca_kind, cache->c_iarg3, TCKINDSIZ);
+
 	return nl_send_simple(sk, RTM_GETACTION, NLM_F_DUMP, &tcahdr,
 			      sizeof(tcahdr));
 }
@@ -597,7 +599,7 @@ static struct rtnl_tc_type_ops act_ops = {
 
 static struct nl_cache_ops rtnl_act_ops = {
 	.co_name		= "route/act",
-	.co_hdrsize		= sizeof(struct tcmsg),
+	.co_hdrsize		= sizeof(struct tcamsg),
 	.co_msgtypes		= {
 					{ RTM_NEWACTION, NL_ACT_NEW, "new" },
 					{ RTM_DELACTION, NL_ACT_DEL, "del" },
