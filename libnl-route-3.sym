@@ -1228,4 +1228,6 @@ global:
 	rtnl_vlan_set_vlan_id;
 	rtnl_vlan_set_vlan_prio;
 	rtnl_route_lookup;
+	rtnl_tc_set_act_index;
+	rtnl_tc_get_act_index;
 } libnl_3_4;

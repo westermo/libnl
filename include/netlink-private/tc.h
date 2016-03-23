@@ -33,7 +33,8 @@ extern "C" {
 #define TCA_ATTR_OVERHEAD	0x1000
 #define TCA_ATTR_LINKTYPE	0x2000
 #define TCA_ATTR_CHAIN          0x4000
-#define TCA_ATTR_MAX            TCA_ATTR_CHAIN
+#define TCA_ATTR_ACT_INDEX      0x8000
+#define TCA_ATTR_MAX            TCA_ATTR_ACT_INDEX
 
 extern int tca_parse(struct nlattr **, int, struct rtnl_tc *,
                      const struct nla_policy *);
