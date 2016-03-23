@@ -508,20 +508,15 @@ err_free:
 
 static int rtnl_act_msg_parse(struct nlmsghdr *n, struct rtnl_act **act)
 {
-	struct rtnl_tc *tc = TC_CAST(*act);
+	struct rtnl_tc *tc;
 	struct nl_cache *link_cache;
 	struct nlattr *tb[TCAA_MAX + 1];
 	struct tcamsg *tm;
 	int err;
 
-	tc->ce_msgtype = n->nlmsg_type;
-
 	err = nlmsg_parse(n, sizeof(*tm), tb, TCAA_MAX, NULL);
 	if (err < 0)
 		return err;
-
-	tm = nlmsg_data(n);
-	tc->tc_family  = tm->tca_family;
 
 	if (tb[TCA_ACT_TAB] == NULL)
 		return -NLE_MISSING_ATTR;
@@ -530,10 +525,22 @@ static int rtnl_act_msg_parse(struct nlmsghdr *n, struct rtnl_act **act)
 	if (err < 0)
 		return err;
 
+	tm = nlmsg_data(n);
+	tc = TC_CAST(*act);
+
+	tc->ce_msgtype = n->nlmsg_type;
+	tc->tc_family  = tm->tca_family;
+
+	/* Code snippet below is not completely right, since it tries to set */
+	/* link on outermost tc action only, but there can be more actions */
+	/* It would be correct to iterate through all actions in act pointer */
+	/* and try to set link on all of them. */
+	/* Another problem is that right now kernel does not return ifindex with action */
+	/* and therefore we can not set neither ifindex nor link. */
 	if ((link_cache = __nl_cache_mngt_require("route/link"))) {
 		struct rtnl_link *link;
 
-		if ((link = rtnl_link_get(link_cache, tc->tc_ifindex))) {
+		if ((link = rtnl_link_get(link_cache, tm->tca_ifindex))) {
 			rtnl_tc_set_link(tc, link);
 
 			/* rtnl_tc_set_link incs refcnt */
@@ -546,25 +553,27 @@ static int rtnl_act_msg_parse(struct nlmsghdr *n, struct rtnl_act **act)
 static int act_msg_parser(struct nl_cache_ops *ops, struct sockaddr_nl *who,
 			  struct nlmsghdr *nlh, struct nl_parser_param *pp)
 {
-	struct rtnl_act *act, *p_act;
+	struct rtnl_act *act = NULL, *p_act = NULL;
 	int err;
 
-	if (!(act = rtnl_act_alloc()))
-		return -NLE_NOMEM;
-
-	if ((err = rtnl_act_msg_parse(nlh, &act)) < 0)
+	if ((err = rtnl_act_msg_parse(nlh, &act)) < 0) {
+		/* if we return NLE_MISSING_ATTR than recvmsgs will fail */
+		/* not returning action cache, which is not what we want */
+		/* and therefore we simply return NL_STOP */
+		if (err == -NLE_MISSING_ATTR)
+			err = NL_STOP;
 		goto errout;
+	}
 
 	p_act = act;
 	while(p_act) {
-		err = pp->pp_cb(OBJ_CAST(act), pp);
+		err = pp->pp_cb(OBJ_CAST(p_act), pp);
 		if (err)
 			break;
 		p_act = p_act->a_next;
 	}
-errout:
-	rtnl_act_put(act);
 
+errout:
 	return err;
 }
 
