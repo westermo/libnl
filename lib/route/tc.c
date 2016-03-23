@@ -603,6 +603,17 @@ int rtnl_tc_get_chain(struct rtnl_tc *tc, uint32_t *out_value)
 	return 0;
 }
 
+void rtnl_tc_set_act_index(struct rtnl_tc *tc, int index)
+{
+	tc->tc_act_index = index;
+	tc->ce_mask |= TCA_ATTR_ACT_INDEX;
+}
+
+int rtnl_tc_get_act_index(struct rtnl_tc *tc)
+{
+	return tc->tc_act_index;
+}
+
 /** @} */
 
 /**

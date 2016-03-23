@@ -586,7 +586,8 @@ struct rtnl_tstats
 	struct rtnl_link *	pre ##_link;		\
 	struct rtnl_tc_ops *	pre ##_ops;		\
 	enum rtnl_tc_type	pre ##_type;		\
-	uint32_t		pre ##_chain
+	uint32_t		pre ##_chain;		\
+	uint32_t		pre ##_act_index
 
 struct rtnl_tc
 {
