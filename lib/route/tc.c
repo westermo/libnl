@@ -551,6 +551,17 @@ uint64_t rtnl_tc_get_stat(struct rtnl_tc *tc, enum rtnl_tc_stat id)
 	return tc->tc_stats[id];
 }
 
+void rtnl_tc_set_act_index(struct rtnl_tc *tc, int index)
+{
+	tc->tc_act_index = index;
+	tc->ce_mask |= TCA_ATTR_ACT_INDEX;
+}
+
+int rtnl_tc_get_act_index(struct rtnl_tc *tc)
+{
+	return tc->tc_act_index;
+}
+
 /** @} */
 
 /**
