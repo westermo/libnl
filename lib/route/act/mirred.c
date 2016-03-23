@@ -23,6 +23,7 @@
 #include <netlink/utils.h>
 #include <netlink-private/route/tc-api.h>
 #include <netlink/route/act/mirred.h>
+#include <netlink/route/tc.h>
 
 static struct nla_policy mirred_policy[TCA_MIRRED_MAX + 1] = {
 	[TCA_MIRRED_PARMS]      = { .minlen = sizeof(struct tc_mirred) },
@@ -42,6 +43,7 @@ static int mirred_msg_parser(struct rtnl_tc *tc, void *data)
 		return -NLE_MISSING_ATTR;
 
 	nla_memcpy(&u->m_parm, tb[TCA_MIRRED_PARMS], sizeof(u->m_parm));
+	rtnl_tc_set_act_index(tc, u->m_parm.index);
 	return 0;
 }
 
@@ -115,6 +117,9 @@ static int mirred_msg_fill(struct rtnl_tc *tc, void *data, struct nl_msg *msg)
 
 	if (!u)
 		return 0;
+
+	if (tc->ce_mask & TCA_ATTR_ACT_INDEX)
+		u->m_parm.index = rtnl_tc_get_act_index(tc);
 
 	NLA_PUT(msg, TCA_MIRRED_PARMS, sizeof(u->m_parm), &u->m_parm);
 	return 0;
