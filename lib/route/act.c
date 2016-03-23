@@ -22,6 +22,7 @@
 #include <netlink-private/route/tc-api.h>
 #include <netlink/route/link.h>
 #include <netlink/route/action.h>
+#include <netlink/route/tc.h>
 
 
 static struct nl_object_ops act_obj_ops;
@@ -204,6 +205,45 @@ void rtnl_act_put(struct rtnl_act *act)
  * @name Addition/Modification/Deletion
  * @{
  */
+
+
+int rtnl_act_alloc_cache(struct nl_sock *sk, char *kind, struct nl_cache **result)
+{
+	struct nl_cache * cache;
+	int err;
+
+	if (!(cache = nl_cache_alloc(&rtnl_act_ops)))
+		return -NLE_NOMEM;
+
+	strncpy(cache->c_iarg3, kind, TCKINDSIZ);
+
+	if (sk && (err = nl_cache_refill(sk, cache)) < 0) {
+		nl_cache_free(cache);
+		return err;
+	}
+
+	*result = cache;
+	return 0;
+}
+
+struct rtnl_act *rtnl_act_get_by_index(struct nl_cache *cache, char *kind,
+				       int index)
+{
+	struct rtnl_act *a = NULL;
+
+	if (cache->c_ops != &rtnl_act_ops)
+		return NULL;
+
+	nl_list_for_each_entry(a, &cache->c_items, ce_list) {
+		if (!strncmp(a->c_kind, kind, TCKINDSIZ) &&
+		    (rtnl_tc_get_act_index(TC_CAST(a)) == index)) {
+			nl_object_get((struct nl_object *) a);
+			return a;
+		}
+	}
+
+	return NULL;
+}
 
 /**
  * Build a netlink message requesting the addition of an action

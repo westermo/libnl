@@ -25,6 +25,9 @@ extern struct rtnl_act *rtnl_act_alloc(void);
 extern struct rtnl_act *rtnl_act_next(struct rtnl_act *);
 extern void		rtnl_act_get(struct rtnl_act *);
 extern void		rtnl_act_put(struct rtnl_act *);
+extern int              rtnl_act_alloc_cache(struct nl_sock *sk, char *kind,
+					     struct nl_cache **);
+extern struct rtnl_act *rtnl_act_get_by_index(struct nl_cache *cache, char *kind, int index);
 extern int		rtnl_act_build_add_request(struct rtnl_act *, int,
 						   struct nl_msg **);
 extern int		rtnl_act_add(struct nl_sock *, struct rtnl_act *, int);
