@@ -130,7 +130,7 @@ static int police_msg_parser(struct rtnl_tc *tc, void *data)
 		return -NLE_MISSING_ATTR;
 
 	nla_memcpy(police, tb[TCA_POLICE_TBF], sizeof(*police));
-
+	rtnl_tc_set_act_index(tc, police->index);
 	return NLE_SUCCESS;
 }
 
@@ -157,6 +157,9 @@ static int police_msg_fill(struct rtnl_tc *tc, void *data, struct nl_msg *msg)
 
 	if (calc_rtab(police, rtab))
 		return -NLE_FAILURE;
+
+	if (tc->ce_mask & TCA_ATTR_ACT_INDEX)
+		police->index = rtnl_tc_get_act_index(tc);
 
 	NLA_PUT(msg, TCA_POLICE_TBF, sizeof(*police), police);
 	NLA_PUT(msg, TCA_POLICE_RATE, 1024, rtab);
