@@ -95,6 +95,7 @@ struct nl_cache
 	int			c_nitems;
 	int                     c_iarg1;
 	int                     c_iarg2;
+	char                    c_iarg3[32];
 	int			c_refcnt;
 	unsigned int		c_flags;
 	struct nl_hash_table *	hashtable;
@@ -569,6 +570,7 @@ struct rtnl_tstats
 	uint32_t		pre ##_mpu;		\
 	uint32_t		pre ##_overhead;	\
 	uint32_t		pre ##_linktype;	\
+	uint32_t		pre ##_act_index;	\
 	char			pre ##_kind[TCKINDSIZ];	\
 	struct nl_data *	pre ##_opts;		\
 	uint64_t		pre ##_stats[RTNL_TC_STATS_MAX+1]; \
