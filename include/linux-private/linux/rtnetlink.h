@@ -713,6 +713,9 @@ struct tcamsg {
 	unsigned char	tca_family;
 	unsigned char	tca__pad1;
 	unsigned short	tca__pad2;
+	int             tca_ifindex;
+	__u32           tca_parent;
+	char            tca_kind[32];
 };
 
 enum {
