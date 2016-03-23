@@ -914,6 +914,10 @@ global:
 	rtnl_cls_get;
 	rtnl_cls_get_by_prio;
 	rtnl_qdisc_get_by_kind;
+	rtnl_act_alloc_cache;
+	rtnl_act_get_by_index;
+	rtnl_tc_set_act_index;
+	rtnl_tc_get_act_index;
 } libnl_3_2_26;
 
 libnl_3_2_28 {
