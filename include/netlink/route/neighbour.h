@@ -30,7 +30,7 @@ extern int	rtnl_neigh_alloc_cache_flags(struct nl_sock *,
 					     struct nl_cache **,
 					     unsigned int);
 extern struct rtnl_neigh *rtnl_neigh_get(struct nl_cache *, int,
-					       struct nl_addr *);
+                                         struct nl_addr *, int);
 
 extern int      rtnl_neigh_parse(struct nlmsghdr *, struct rtnl_neigh **);
 
