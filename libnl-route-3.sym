@@ -971,4 +971,14 @@ global:
         rtnl_mdb_del_group;
 
 	rtnl_route_lookup;
+
+	rtnl_nat_set_old_addr;
+	rtnl_nat_get_old_addr;
+	rtnl_nat_set_new_addr;
+	rtnl_nat_get_new_addr;
+	rtnl_nat_set_mask;
+	rtnl_nat_get_mask;
+	rtnl_nat_set_flags;
+	rtnl_nat_get_flags;
+
 } libnl_3_2_27;
