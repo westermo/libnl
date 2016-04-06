@@ -1230,4 +1230,18 @@ global:
 	rtnl_route_lookup;
 	rtnl_tc_set_act_index;
 	rtnl_tc_get_act_index;
+	rtnl_neigh_ll_get;
+	rtnl_route_lookup;
+	rtnl_nat_set_old_addr;
+	rtnl_nat_set_old_in_addr;
+	rtnl_nat_get_old_addr;
+	rtnl_nat_set_new_addr;
+	rtnl_nat_set_new_in_addr;
+	rtnl_nat_get_new_addr;
+	rtnl_nat_set_mask;
+	rtnl_nat_get_mask;
+	rtnl_nat_set_flags;
+	rtnl_nat_get_flags;
+	rtnl_nat_set_action;
+	rtnl_nat_get_action;
 } libnl_3_4;
