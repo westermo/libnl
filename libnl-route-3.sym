@@ -1283,4 +1283,16 @@ global:
 	rtnl_route_nh_get_encap_mpls_ttl;
 	rtnl_link_bridge_set_vlan_filtering;
 	rtnl_link_bridge_set_vlan_default_pvid;
+	rtnl_nat_set_old_addr;
+	rtnl_nat_set_old_in_addr;
+	rtnl_nat_get_old_addr;
+	rtnl_nat_set_new_addr;
+	rtnl_nat_set_new_in_addr;
+	rtnl_nat_get_new_addr;
+	rtnl_nat_set_mask;
+	rtnl_nat_get_mask;
+	rtnl_nat_set_flags;
+	rtnl_nat_get_flags;
+	rtnl_nat_set_action;
+	rtnl_nat_get_action;
 } libnl_3_5;

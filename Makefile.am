@@ -125,6 +125,7 @@ libnlinclude_netlink_route_act_HEADERS = \
 	include/netlink/route/act/mirred.h \
 	include/netlink/route/act/skbedit.h \
 	include/netlink/route/act/vlan.h \
+	include/netlink/route/act/nat.h \
 	$(NULL)
 libnlinclude_netlink_route_clsdir = $(libnlincludedir)/netlink/route/cls
 libnlinclude_netlink_route_cls_HEADERS = \
@@ -262,6 +263,7 @@ noinst_HEADERS = \
 	include/linux-private/linux/tc_act/tc_mirred.h \
 	include/linux-private/linux/tc_act/tc_skbedit.h \
 	include/linux-private/linux/tc_act/tc_vlan.h \
+	include/linux-private/linux/tc_act/tc_nat.h \
 	include/linux-private/linux/tc_ematch/tc_em_meta.h \
 	include/linux-private/linux/veth.h \
 	include/linux-private/linux/xfrm.h \
@@ -382,6 +384,7 @@ lib_libnl_route_3_la_SOURCES = \
 	lib/route/act/mirred.c \
 	lib/route/act/skbedit.c \
 	lib/route/act/vlan.c \
+	lib/route/act/nat.c \
 	lib/route/addr.c \
 	lib/route/class.c \
 	lib/route/classid.c \
