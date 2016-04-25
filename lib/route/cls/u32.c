@@ -197,6 +197,24 @@ static int u32_clone(void *_dst, void *_src)
 			return -NLE_NOMEM;
 
 		memcpy(dst->cu_act, src->cu_act, sizeof(struct rtnl_act));
+
+		/* action nl list next and prev pointers must be updated */
+		nl_init_list_head(&dst->cu_act->ce_list);
+
+		if (src->cu_act->c_opts && !(dst->cu_act->c_opts = nl_data_clone(src->cu_act->c_opts)))
+			return -NLE_NOMEM;
+
+		if (src->cu_act->c_xstats && !(dst->cu_act->c_xstats = nl_data_clone(src->cu_act->c_xstats)))
+			return -NLE_NOMEM;
+
+		if (src->cu_act->c_subdata && !(dst->cu_act->c_subdata = nl_data_clone(src->cu_act->c_subdata)))
+			return -NLE_NOMEM;
+
+		if (dst->cu_act->c_link) {
+			nl_object_get(OBJ_CAST(dst->cu_act->c_link));
+		}
+
+		dst->cu_act->a_next = NULL;   /* Only clone first in chain */
 	}
 
 	if (src->cu_police && !(dst->cu_police = nl_data_clone(src->cu_police)))
@@ -553,6 +571,7 @@ struct rtnl_act* rtnl_u32_get_action(struct rtnl_cls *cls)
     if (!(u->cu_mask & U32_ATTR_ACTION))
         return NULL;
 
+    rtnl_act_get(u->cu_act);
     return u->cu_act;
 }
 
