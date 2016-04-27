@@ -556,16 +556,12 @@ struct rtnl_act *rtnl_u32_get_action(struct rtnl_cls *cls)
 	if (!(u = rtnl_tc_data(TC_CAST(cls))))
 		return NULL;
 
-	if (u->cu_mask & U32_ATTR_ACTION) {
-		if (!(act = rtnl_act_alloc()))
-			return NULL;
+	if (!(u->cu_mask & U32_ATTR_ACTION))
+		return NULL;
 
-		memcpy(act, u->cu_act, sizeof(struct rtnl_act));
-		rtnl_act_get(act);
-		return act;
-	}
-
-	return NULL;
+	act = u->cu_act;
+	rtnl_act_get(act);
+	return act;
 }
 
 int rtnl_u32_del_action(struct rtnl_cls *cls, struct rtnl_act *act)
