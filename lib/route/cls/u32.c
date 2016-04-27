@@ -567,6 +567,7 @@ struct rtnl_act* rtnl_u32_get_action(struct rtnl_cls *cls)
     if (!(u->cu_mask & U32_ATTR_ACTION))
         return NULL;
 
+    rtnl_act_get(u->cu_act);
     return u->cu_act;
 }
 
