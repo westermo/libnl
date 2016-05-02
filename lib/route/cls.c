@@ -399,6 +399,7 @@ struct rtnl_cls *rtnl_cls_get_by_prio(struct nl_cache *cache, int ifindex,
 				      uint32_t parent, uint16_t prio)
 {
 	struct rtnl_cls *cls;
+	int i = 0;
 
 	if (cache->c_ops != &rtnl_cls_ops)
 		return NULL;
@@ -406,6 +407,12 @@ struct rtnl_cls *rtnl_cls_get_by_prio(struct nl_cache *cache, int ifindex,
 	nl_list_for_each_entry(cls, &cache->c_items, ce_list) {
 		if ((cls->c_parent == parent) && (cls->c_ifindex == ifindex)
 		    && (cls->c_prio == prio)) {
+			/* XXX: this is a temporary fix, as for each real cls */
+			/* there are three cls returned, and only the 3rd is */
+			/* a real cls */
+			i++;
+			if (i != 3)
+				continue;
 			nl_object_get((struct nl_object *) cls);
 			return cls;
 		}
