@@ -982,4 +982,5 @@ global:
 	rtnl_nat_get_flags;
 
 	rtnl_neigh_ll_get;
+	rtnl_link_team_alloc;
 } libnl_3_2_27;
