@@ -804,7 +804,7 @@ int nl_addr_info(const struct nl_addr *addr, struct addrinfo **result)
 		.ai_family = addr->a_family,
 	};
 
-	nl_addr2str(addr, buf, sizeof(buf));
+	nl_addr2str_nopref(addr, buf, sizeof(buf));
 
 	err = getaddrinfo(buf, NULL, &hint, result);
 	if (err != 0) {
@@ -1029,15 +1029,12 @@ char *nl_addr2str(const struct nl_addr *addr, char *buf, size_t size)
 					 (unsigned char) addr->a_addr[i]);
 				strncat(buf, tmp, size - strlen(buf) - 1);
 			}
-			break;
+			return buf;
 	}
 
 prefix:
-	if (addr->a_family != AF_MPLS &&
-	    addr->a_prefixlen != (8 * addr->a_len)) {
-		snprintf(tmp, sizeof(tmp), "/%u", addr->a_prefixlen);
-		strncat(buf, tmp, size - strlen(buf) - 1);
-	}
+	snprintf(tmp, sizeof(tmp), "/%u", addr->a_prefixlen);
+	strncat(buf, tmp, size - strlen(buf) - 1);
 
 	return buf;
 }
