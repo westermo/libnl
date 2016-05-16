@@ -983,14 +983,12 @@ char *nl_addr2str(const struct nl_addr *addr, char *buf, size_t size)
 					 (unsigned char) addr->a_addr[i]);
 				strncat(buf, tmp, size - strlen(buf) - 1);
 			}
-			break;
+			return buf;
 	}
 
 prefix:
-	if (addr->a_prefixlen != (8 * addr->a_len)) {
-		snprintf(tmp, sizeof(tmp), "/%u", addr->a_prefixlen);
-		strncat(buf, tmp, size - strlen(buf) - 1);
-	}
+	snprintf(tmp, sizeof(tmp), "/%u", addr->a_prefixlen);
+	strncat(buf, tmp, size - strlen(buf) - 1);
 
 	return buf;
 }
