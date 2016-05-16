@@ -171,6 +171,7 @@
 #define NEIGH_ATTR_PROBES       0x100
 #define NEIGH_ATTR_MASTER       0x200
 #define NEIGH_ATTR_VLAN         0x400
+#define NEIGH_ATTR_ENTRY_STATE  0X800
 
 static struct nl_cache_ops rtnl_neigh_ops;
 static struct nl_object_ops neigh_obj_ops;
@@ -306,6 +307,7 @@ static const struct trans_tbl neigh_attrs[] = {
 	__ADD(NEIGH_ATTR_PROBES, probes),
 	__ADD(NEIGH_ATTR_MASTER, master),
 	__ADD(NEIGH_ATTR_VLAN, vlan),
+	__ADD(NEIGH_ATTR_ENTRY_STATE, entry_state),
 };
 
 static char *neigh_attrs2str(int attrs, char *buf, size_t len)
@@ -421,6 +423,11 @@ int rtnl_neigh_parse(struct nlmsghdr *n, struct rtnl_neigh **result)
 	if (tb[NDA_VLAN]) {
 		neigh->n_vlan = nla_get_u16(tb[NDA_VLAN]);
 		neigh->ce_mask |= NEIGH_ATTR_VLAN;
+	}
+
+	if (tb[NDA_ENTRY_STATE]) {
+		neigh->entry_state = nla_get_u16(tb[NDA_ENTRY_STATE]);
+		neigh->ce_mask |= NEIGH_ATTR_ENTRY_STATE;
 	}
 
 	/*
@@ -929,6 +936,14 @@ int rtnl_neigh_get_state(struct rtnl_neigh *neigh)
 {
 	if (neigh->ce_mask & NEIGH_ATTR_STATE)
 		return neigh->n_state;
+	else
+		return -1;
+}
+
+int rtnl_neigh_get_entry_state(struct rtnl_neigh *neigh)
+{
+	if (neigh->ce_mask & NEIGH_ATTR_ENTRY_STATE)
+		return neigh->entry_state;
 	else
 		return -1;
 }

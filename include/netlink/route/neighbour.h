@@ -54,6 +54,7 @@ extern void			rtnl_neigh_set_state(struct rtnl_neigh *, int);
 extern int			rtnl_neigh_get_state(struct rtnl_neigh *);
 extern void			rtnl_neigh_unset_state(struct rtnl_neigh *,
 						       int);
+extern int                      rtnl_neigh_get_entry_state(struct rtnl_neigh *neigh);
 
 extern void			rtnl_neigh_set_flags(struct rtnl_neigh *,
 						     unsigned int);

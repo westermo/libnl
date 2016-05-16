@@ -1244,4 +1244,5 @@ global:
 	rtnl_nat_get_flags;
 	rtnl_nat_set_action;
 	rtnl_nat_get_action;
+	rtnl_neigh_get_entry_state;
 } libnl_3_4;
