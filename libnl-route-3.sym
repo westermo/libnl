@@ -980,6 +980,7 @@ global:
 	rtnl_link_vrf_set_tableid;
 	rtnl_neigh_alloc_cache_flags;
 	rtnl_neigh_ll_get;
+	rtnl_neigh_get_entry_state;
 
 	rtnl_route_lookup;
 
@@ -995,7 +996,6 @@ global:
 	rtnl_nat_get_flags;
 	rtnl_nat_set_action;
 	rtnl_nat_get_action;
-
 } libnl_3_2_27;
 
 libnl_3_2_29 {
