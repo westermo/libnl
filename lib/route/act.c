@@ -35,8 +35,8 @@ struct rtnl_act * rtnl_act_next(struct rtnl_act *act)
 	if (act == NULL)
 	        return NULL;
 
-	if (c->a_next != NULL) {
-	        next = a->a_next;
+	if (act->a_next != NULL) {
+	        next = act->a_next;
 		rtnl_act_get(next);
 		return next;
 	}
