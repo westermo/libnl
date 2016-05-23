@@ -981,6 +981,7 @@ global:
 	rtnl_neigh_alloc_cache_flags;
 	rtnl_neigh_ll_get;
 	rtnl_neigh_get_entry_state;
+	rtnl_neigh_get_updated;
 
 	rtnl_route_lookup;
 
