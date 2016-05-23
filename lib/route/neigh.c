@@ -900,6 +900,14 @@ int rtnl_neigh_get_entry_state(struct rtnl_neigh *neigh)
 		return -1;
 }
 
+int rtnl_neigh_get_updated(struct rtnl_neigh *neigh)
+{
+	if (neigh->ce_mask & NEIGH_ATTR_CACHEINFO)
+		return neigh->n_cacheinfo.nci_updated;
+	else
+		return -1;
+}
+
 void rtnl_neigh_unset_state(struct rtnl_neigh *neigh, int state)
 {
 	neigh->n_state_mask |= state;
