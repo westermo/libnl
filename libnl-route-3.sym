@@ -1245,4 +1245,5 @@ global:
 	rtnl_nat_set_action;
 	rtnl_nat_get_action;
 	rtnl_neigh_get_entry_state;
+	rtnl_neigh_get_updated;
 } libnl_3_4;
