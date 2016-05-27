@@ -135,7 +135,7 @@ static int af_fill(struct rtnl_link *link, struct rtnl_link_af_ops *ops,
 	if (!ops->ao_fill_af)
 		return 0;
 
-	if (!(af_attr = nla_nest_start(msg, ops->ao_family)))
+	if (!(af_attr = nla_nest_start(msg, ops->ao_family | NLA_F_NESTED)))
 		return -NLE_MSGSIZE;
 
 	if ((err = ops->ao_fill_af(link, arg, data)) < 0)
