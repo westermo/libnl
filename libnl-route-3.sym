@@ -985,4 +985,8 @@ global:
 	rtnl_link_team_alloc;
 	rtnl_neigh_get_entry_state;
 	rtnl_neigh_get_updated;
+
+        rtnl_link_tun_alloc;
+        rtnl_link_tun_set_type;
+        rtnl_link_tun_get_type;
 } libnl_3_2_27;

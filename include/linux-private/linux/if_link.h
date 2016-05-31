@@ -274,6 +274,13 @@ enum {
 
 #define IFLA_INFO_MAX	(__IFLA_INFO_MAX - 1)
 
+enum {
+	IFLA_TUN_UNSPEC,
+        IFLA_TUN_TYPE,
+	__IFLA_TUN_MAX,
+};
+#define IFLA_TUN_MAX	(__IFLA_TUN_MAX - 1)
+
 /* VLAN section */
 
 enum {
