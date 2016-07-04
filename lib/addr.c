@@ -1046,6 +1046,56 @@ prefix:
 	return buf;
 }
 
+/**
+ * Convert abstract address object to character string. No prefix version.
+ * @arg addr		Abstract address object.
+ * @arg buf		Destination buffer.
+ * @arg size		Size of destination buffer.
+ *
+ * Converts an abstract address to a character string and stores
+ * the result in the specified destination buffer.
+ * Unlike @nl_addr2str, this function does nto write prefix at the end.
+ *
+ * @return Address represented in ASCII stored in destination buffer.
+ */
+char *nl_addr2str_nopref(const struct nl_addr *addr, char *buf, size_t size)
+{
+	unsigned int i;
+	char tmp[16];
+
+	if (!addr || !addr->a_len) {
+		snprintf(buf, size, "none");
+		return buf;
+	}
+
+	switch (addr->a_family) {
+		case AF_INET:
+			inet_ntop(AF_INET, addr->a_addr, buf, size);
+			break;
+
+		case AF_INET6:
+			inet_ntop(AF_INET6, addr->a_addr, buf, size);
+			break;
+
+		case AF_DECnet:
+			dnet_ntop(addr->a_addr, addr->a_len, buf, size);
+			break;
+
+		case AF_LLC:
+		default:
+			snprintf(buf, size, "%02x",
+				 (unsigned char) addr->a_addr[0]);
+			for (i = 1; i < addr->a_len; i++) {
+				snprintf(tmp, sizeof(tmp), ":%02x",
+					 (unsigned char) addr->a_addr[i]);
+				strncat(buf, tmp, size - strlen(buf) - 1);
+			}
+			break;
+	}
+
+	return buf;
+}
+
 /** @} */
 
 /**
