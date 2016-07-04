@@ -61,6 +61,7 @@ extern int		nl_str2af(const char *);
 
 /* Translations to Strings */
 extern char *		nl_addr2str(const struct nl_addr *, char *, size_t);
+extern char *		nl_addr2str_nopref(const struct nl_addr *, char *, size_t);
 
 #ifdef __cplusplus
 }
