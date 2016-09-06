@@ -27,7 +27,7 @@ extern "C" {
 	extern uint32_t rtnl_link_ipvti_get_link(struct rtnl_link *link);
 
 	extern int rtnl_link_ipvti_set_ikey(struct rtnl_link *link, uint32_t ikey);
-	extern uint32_t rtnl_link_get_ikey(struct rtnl_link *link);
+	extern uint32_t rtnl_link_ipvti_get_ikey(struct rtnl_link *link);
 
 	extern int rtnl_link_ipvti_set_okey(struct rtnl_link *link, uint32_t okey);
 	extern uint32_t rtnl_link_get_okey(struct rtnl_link *link);
