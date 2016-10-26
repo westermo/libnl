@@ -985,4 +985,8 @@ global:
 	rtnl_link_team_alloc;
 	rtnl_neigh_get_entry_state;
 	rtnl_neigh_get_updated;
+
+	rtnl_link_ppp_alloc;
+	rtnl_link_ppp_set_fd;
+	rtnl_link_ppp_get_fd;
 } libnl_3_2_27;
