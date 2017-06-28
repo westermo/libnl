@@ -148,6 +148,11 @@ enum {
 	RTM_GETSTATS = 94,
 #define RTM_GETSTATS RTM_GETSTATS
 
+	RTM_NEWCONF = 96,
+#define RTM_NEWCONF RTM_NEWCONF
+	RTM_GETCONF = 98,
+#define RTM_GETCONF RTM_GETCONF
+
 	__RTM_MAX,
 #define RTM_MAX		(((__RTM_MAX + 3) & ~3) - 1)
 };
@@ -666,6 +671,8 @@ enum rtnetlink_groups {
 #define RTNLGRP_NSID		RTNLGRP_NSID
 	RTNLGRP_MPLS_NETCONF,
 #define RTNLGRP_MPLS_NETCONF	RTNLGRP_MPLS_NETCONF
+	RTNLGRP_SHDSL,
+#define RTNLGRP_SHDSL		RTNLGRP_SHDSL
 	__RTNLGRP_MAX
 };
 #define RTNLGRP_MAX	(__RTNLGRP_MAX - 1)
@@ -689,6 +696,39 @@ struct tcamsg {
 #define RTEXT_FILTER_BRVLAN	(1 << 1)
 #define RTEXT_FILTER_BRVLAN_COMPRESSED	(1 << 2)
 #define	RTEXT_FILTER_SKIP_STATS	(1 << 3)
+
+/* SHDSL message */
+struct shdsl_msg {
+	unsigned char	shdm_family;
+	unsigned char	shdm_pad1;
+	unsigned short	shdm_pad2;
+	int		shdm_index;
+	__u32	        shdm_enabled;
+	__u32           shdm_chan;
+};
+
+enum {
+	SHDA_ROLE = 1,
+	SHDA_LFF,
+	SHDA_GHS_THR,
+	SHDA_RATE,
+	SHDA_AVERAGE_BPS,
+	SHDA_PEAK_BPS,
+	SHDA_NOISE_MARGIN,
+	SHDA_NONSTRICT,
+	SHDA_LOW_JITTER,
+	SHDA_EMF,
+	SHDA_PAF,
+	SHDA_LINK_STATE,
+	SHDA_LINK_STATUS,
+	SHDA_LINK_UPTIME,
+	SHDA_NO_OF_NEGS,
+	SHDA_IFINDEX,
+	SHDA_IFNAME,
+	__SHDA_MAX
+};
+
+#define SHDA_MAX (__SHDA_MAX - 1)
 
 /* End of information exported to user level */
 
