@@ -1347,4 +1347,28 @@ struct xfrmnl_sp {
 	struct xfrmnl_mark              mark;
 };
 
+struct rtnl_shdsl {
+	NLHDR_COMMON
+
+	uint8_t    s_family;
+	uint8_t    s_ifindex;
+	char       s_ifname[IFNAMSIZ];
+	uint32_t   s_enabled;
+	uint32_t   s_channo;
+	uint8_t    s_role;
+	uint8_t    s_lff;
+	uint32_t   s_ghs_thr;
+	uint32_t   s_rate;
+	uint32_t   s_average_bps;
+	uint32_t   s_peak_bps;
+	uint8_t    s_state;
+	uint8_t    s_status;
+	uint32_t   s_uptime;
+	uint32_t   s_no_of_negs;
+	uint8_t    s_noise_margin;
+	uint8_t    s_nonstrict;
+	uint8_t    s_low_jitter;
+	uint8_t    s_emf;
+};
+
 #endif
