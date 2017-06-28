@@ -90,6 +90,7 @@ nobase_libnlinclude_HEADERS = \
 	netlink/route/rtnl.h \
 	netlink/route/rule.h \
 	netlink/route/tc.h \
+	netlink/route/shdsl.h \
 	netlink/socket.h \
 	netlink/types.h \
 	netlink/utils.h \
