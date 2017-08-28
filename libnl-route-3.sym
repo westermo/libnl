@@ -1029,4 +1029,5 @@ global:
 	rtnl_shdsl_get_no_of_negs;
 	rtnl_shdsl_role2str;
 	rtnl_shdsl_state2str;
+	rtnl_mdb_set_macaddr;
 } libnl_3_2_27;
