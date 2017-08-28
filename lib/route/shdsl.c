@@ -20,7 +20,7 @@
 #include <netlink/route/link.h>
 #include <netlink/route/shdsl.h>
 
-#define AF_SHDSL        43      /* SHDSL                        */
+#define AF_SHDSL        44      /* SHDSL                        */
 #define PF_SHDSL        AF_SHDSL
 
 #define SHDSL_ATTR_FAMILY       0x01
