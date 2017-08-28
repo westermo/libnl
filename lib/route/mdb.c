@@ -475,6 +475,8 @@ static int mdb_msg_parser(struct nl_cache_ops *ops, struct sockaddr_nl *who,
 				mgrp = rtnl_mdb_mgrp_alloc();
 				if (!mgrp)
 					return -NLE_NOMEM;
+
+				mgrp->proto = ntohs(bm->addr.proto);
 				/* Save the family info in nl_addr format
 				 */
 				if (htons(ETH_P_IP) == bm->addr.proto) {
@@ -482,10 +484,16 @@ static int mdb_msg_parser(struct nl_cache_ops *ops, struct sockaddr_nl *who,
 				} else {
 					family = AF_INET6;
 				}
-				mgrp->addr = nl_addr_build(family,
-						(unsigned char *)&bm->addr.u,
-						family==AF_INET ?
-						sizeof(__be32):sizeof(struct in6_addr));
+				if (ETH_P_IP == mgrp->proto)
+					mgrp->addr = nl_addr_build(family,
+								   (unsigned char *)&bm->addr.u,
+								   ETH_P_IP);
+				else
+					mgrp->addr = nl_addr_build(family,
+								   (unsigned char *)&bm->addr.u,
+								   family==AF_INET ?
+								   sizeof(__be32):
+								   sizeof(struct in6_addr));
 				mgrp->vid = bm->vid;
 				mgprt = rtnl_mdb_mgport_alloc();
 				if (!mgprt) {
@@ -783,6 +791,18 @@ void rtnl_mdb_set_ipaddr(struct rtnl_mgrp *mgrp, int ip)
 	mgrp->addr = nl_addr_build(AF_INET,
 				   (unsigned char *)&ip,
 				   sizeof(__be32));
+
+	mgrp->proto = ETH_P_IP;
+}
+
+/* Set multicast group MAC addr
+ */
+void rtnl_mdb_set_macaddr(struct rtnl_mgrp *mgrp, uint8_t *mac)
+{
+	mgrp->addr = nl_addr_build(AF_INET,
+				   mac, ETH_ALEN);
+
+	mgrp->proto = ETH_P_ALL;
 }
 
 /* Set VLAN for MDB entry
@@ -966,8 +986,13 @@ static int build_mdb_msg(struct rtnl_mdb *mdb, struct rtnl_mgrp *grp, int ifinde
 	bpm.ifindex = rtnl_mdb_get_brifindex(mdb);
 
 	entry.ifindex = ifindex;
-	entry.addr.u.ip4 = *((int*) nl_addr_get_binary_addr(grp->addr));
-	entry.addr.proto = htons(ETH_P_IP);
+	entry.addr.proto = htons(grp->proto);
+	if (grp->proto == ETH_P_IP)
+		entry.addr.u.ip4 = *((int*) nl_addr_get_binary_addr(grp->addr));
+	else if (grp->proto == ETH_P_IPV6)
+		entry.addr.u.ip6 = *((struct in6_addr*) nl_addr_get_binary_addr(grp->addr));
+	else if (grp->proto == ETH_P_ALL)
+		memcpy(entry.addr.u.mac, nl_addr_get_binary_addr(grp->addr), ETH_ALEN);
         entry.state |= MDB_PERMANENT;
 	if (grp->vid)
 		entry.vid = grp->vid;

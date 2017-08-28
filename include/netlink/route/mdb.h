@@ -57,6 +57,7 @@ unsigned int rtnl_mdb_get_brifindex(struct rtnl_mdb *mdb);
 void rtnl_mdb_set_brifindex(struct rtnl_mdb *mdb, int ifindex);
 struct nl_addr *rtnl_mdb_get_ipaddr(struct rtnl_mgrp *grp);
 void rtnl_mdb_set_ipaddr(struct rtnl_mgrp *grp, int ip);
+void rtnl_mdb_set_macaddr(struct rtnl_mgrp *mgrp, uint8_t *mac);
 unsigned int rtnl_mdb_get_nr_rport(struct rtnl_mdb *mdb);
 unsigned int rtnl_mrport_get_rpifindex(struct rtnl_mrport *mrprt);
 unsigned int rtnl_mdb_get_nr_grps(struct rtnl_mdb *mdb);
