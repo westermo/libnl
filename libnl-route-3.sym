@@ -1037,6 +1037,7 @@ global:
 	rtnl_shdsl_get_no_of_negs;
 	rtnl_shdsl_role2str;
 	rtnl_shdsl_state2str;
+	rtnl_link_bridge_vlan_set_sid;
 } libnl_3_2_27;
 
 libnl_3_2_29 {
