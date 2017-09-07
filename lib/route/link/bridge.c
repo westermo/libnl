@@ -77,6 +77,7 @@ struct bridge_vlan_data {
 	struct vlan_field	member;
 	struct vlan_field	untagged;
 	int			pvid;
+	int			sid[VLAN_N_VID];
 };
 
 struct bridge_data
@@ -238,6 +239,8 @@ static struct nla_policy br_af_attrs_policy[IFLA_BRIDGE_MAX+1] = {
 	[IFLA_BRIDGE_FLAGS]		= { .type = NLA_U16 },
 	[IFLA_BRIDGE_MODE]		= { .type = NLA_U16 },
 	[IFLA_BRIDGE_VLAN_INFO]		= { .type = NLA_UNSPEC },
+	[IFLA_BRIDGE_VLAN_TUNNEL_INFO]	= { .type = NLA_UNSPEC },
+	[IFLA_BRIDGE_VLAN_STP_INFO]	= { .type = NLA_U16 },
 };
 
 static int bridge_parse_af(struct rtnl_link *link, struct nlattr *af_spec,
@@ -257,6 +260,9 @@ static int bridge_parse_af(struct rtnl_link *link, struct nlattr *af_spec,
 
 	if (attrs[IFLA_BRIDGE_MODE])
 		bd->b_mode = nla_get_u16(attrs[IFLA_BRIDGE_MODE]);
+
+	if (attrs[IFLA_BRIDGE_VLAN_STP_INFO])
+		bd->b_mode = nla_get_u16(attrs[IFLA_BRIDGE_VLAN_STP_INFO]);
 
 	rtnl_link_bridge_vlan_flush(link);
 	err = __parse_vlans(af_spec, bd);
@@ -286,6 +292,9 @@ static int __fill_vlan(struct bridge_vlan_data *vd, struct nl_msg *msg,
 	/*        (vlan.flags & BRIDGE_VLAN_INFO_RANGE_BEGIN) ? "range-begin" : "", */
 	/*        (vlan.flags & BRIDGE_VLAN_INFO_RANGE_END) ? "range-end" : ""); */
 	       
+	if (vd->sid[vid])
+		nla_put_u16(msg, IFLA_BRIDGE_VLAN_STP_INFO, vd->sid[vid]);
+
 	return nla_put(msg, IFLA_BRIDGE_VLAN_INFO, sizeof(vlan), &vlan);
 }
 
@@ -850,6 +859,26 @@ int rtnl_link_bridge_vlan_foreach(struct rtnl_link *link,
 	}
 
 	return 0;
+}
+
+int rtnl_link_bridge_vlan_set_sid(struct rtnl_link *link, unsigned int vid, unsigned int sid)
+{
+	struct bridge_data *bd = bridge_data(link);
+
+	IS_BRIDGE_LINK_ASSERT(link);
+
+	bd->b_vlans.sid[vid] = sid;
+
+	return 0;
+}
+
+int rtnl_link_bridge_vlan_get_sid(struct rtnl_link *link, unsigned int vid)
+{
+	struct bridge_data *bd = bridge_data(link);
+
+	IS_BRIDGE_LINK_ASSERT(link);
+
+	return bd->b_vlans.sid[vid];
 }
 
 /**
