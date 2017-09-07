@@ -29,6 +29,7 @@ struct rtnl_link_bridge_vlan
 	uint16_t                pvid;
 	uint32_t                vlan_bitmap[RTNL_LINK_BRIDGE_VLAN_BITMAP_LEN];
 	uint32_t                untagged_bitmap[RTNL_LINK_BRIDGE_VLAN_BITMAP_LEN];
+        uint32_t                sid[RTNL_LINK_BRIDGE_VLAN_BITMAP_MAX];
 };
 
 /**
@@ -76,6 +77,9 @@ extern int	rtnl_link_bridge_vlan_foreach(struct rtnl_link *link,
 					      int (*cb)(struct rtnl_link *,
 							const struct bridge_vlan_info *, void *),
 					      void *arg);
+extern int	rtnl_link_bridge_vlan_set_sid(struct rtnl_link *link, unsigned int vid,
+					      unsigned int sid);
+extern int      rtnl_link_bridge_vlan_get_sid(struct rtnl_link *link, unsigned int vid);
 
 extern int	rtnl_link_bridge_unset_flags(struct rtnl_link *, unsigned int);
 extern int	rtnl_link_bridge_set_flags(struct rtnl_link *, unsigned int);
