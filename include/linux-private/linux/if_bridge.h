@@ -186,6 +186,7 @@ struct br_mdb_entry {
 	__u32 ifindex;
 #define MDB_TEMPORARY 0
 #define MDB_PERMANENT 1
+#define MDB_STATE_MGMT		(1 << 7)
 	__u8 state;
 	__u16 vid;
 	struct {

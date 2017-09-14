@@ -993,6 +993,8 @@ static int build_mdb_msg(struct rtnl_mdb *mdb, struct rtnl_mgrp *grp, int ifinde
 		entry.addr.u.ip6 = *((struct in6_addr*) nl_addr_get_binary_addr(grp->addr));
 	else if (grp->proto == ETH_P_ALL)
 		memcpy(entry.addr.u.mac, nl_addr_get_binary_addr(grp->addr), ETH_ALEN);
+	if (flags & MDB_STATE_MGMT)
+		entry.state |= MDB_STATE_MGMT;
         entry.state |= MDB_PERMANENT;
 	if (grp->vid)
 		entry.vid = grp->vid;
