@@ -23,25 +23,47 @@
 #define AF_SHDSL        44      /* SHDSL                        */
 #define PF_SHDSL        AF_SHDSL
 
-#define SHDSL_ATTR_FAMILY       0x01
-#define SHDSL_ATTR_IFINDEX      0x02
-#define SHDSL_ATTR_CHANNO       0x03
-#define SHDSL_ATTR_ROLE         0x04
-#define SHDSL_ATTR_GHS_THR      0x05
-#define SHDSL_ATTR_RATE         0x06
-#define SHDSL_ATTR_NOISE_MARGIN 0x07
-#define SHDSL_ATTR_NONSTRICT    0x08
-#define SHDSL_ATTR_LOW_JITTER   0x09
-#define SHDSL_ATTR_LFF          0xa
-#define SHDSL_ATTR_AVERAGE_BPS  0xb
-#define SHDSL_ATTR_PEAK_BPS     0xc
-#define SHDSL_ATTR_EMF          0xd
-#define SHDSL_ATTR_LINK_STATE   0xe
-#define SHDSL_ATTR_LINK_STATUS  0xf
-#define SHDSL_ATTR_LINK_UPTIME  0x11
-#define SHDSL_ATTR_NO_OF_NEGS   0x12
-#define SHDSL_ATTR_IFNAME       0x13
-
+#define SHDSL_ATTR_FAMILY              0x01
+#define SHDSL_ATTR_IFINDEX             0x02
+#define SHDSL_ATTR_CHANNO              0x03
+#define SHDSL_ATTR_ROLE                0x04
+#define SHDSL_ATTR_GHS_THR             0x05
+#define SHDSL_ATTR_RATE                0x06
+#define SHDSL_ATTR_NOISE_MARGIN        0x07
+#define SHDSL_ATTR_NONSTRICT           0x08
+#define SHDSL_ATTR_LOW_JITTER          0x09
+#define SHDSL_ATTR_LFF                 0xa
+#define SHDSL_ATTR_AVERAGE_BPS         0xb
+#define SHDSL_ATTR_PEAK_BPS            0xc
+#define SHDSL_ATTR_EMF                 0xd
+#define SHDSL_ATTR_LINK_STATE          0xe
+#define SHDSL_ATTR_LINK_STATUS         0xf
+#define SHDSL_ATTR_LINK_UPTIME         0x11
+#define SHDSL_ATTR_NO_OF_NEGS          0x12
+#define SHDSL_ATTR_IFNAME              0x13
+#define SHDSL_ATTR_ACTUAL_RATE         0x14
+#define SHDSL_ATTR_MEASURED_SNR        0x15
+#define SHDSL_ATTR_ENABLED             0x16
+#define SHDSL_ATTR_BITS_P_SYM          0x17
+#define SHDSL_ATTR_POW_BACKOFF         0x18
+#define SHDSL_ATTR_POW_BACKOFF_FAREND  0x19
+#define SHDSL_ATTR_REGION              0x1a
+#define SHDSL_ATTR_IDC_VER             0x1b
+#define SHDSL_ATTR_ATTENUATION         0x1c
+#define SHDSL_ATTR_MAX_RATE            0x1d
+#define SHDSL_ATTR_CAPABILITY_REGION   0x1e
+#define SHDSL_ATTR_NUM_REPEATERS       0x1f
+#define SHDSL_ATTR_NUM_WIREPAIR        0x20
+#define SHDSL_ATTR_PSD                 0x21
+#define SHDSL_ATTR_REMOTE_ENABLED      0x22
+#define SHDSL_ATTR_POWER_FEEDING       0x23
+#define SHDSL_ATTR_CC_NOISE_MARGIN_UP  0x24
+#define SHDSL_ATTR_CC_NOISE_MARGIN_DOWN 0x25
+#define SHDSL_ATTR_WC_NOISE_MARGIN_UP  0x26
+#define SHDSL_ATTR_WC_NOISE_MARGIN_DOWN 0x27
+#define SHDSL_ATTR_USED_TARGET_MARGINS 0x28
+#define SHDSL_ATTR_REF_CLK             0x29
+#define SHDSL_ATTR_LINE_PROBE          0x2a
 
 #define SHDSL_ROLE_DISABLED 0
 #define SHDSL_ROLE_CO       1
@@ -58,21 +80,41 @@ static struct nl_cache_ops rtnl_shdsl_ops;
 static struct nl_object_ops shdsl_obj_ops;
 
 static struct nla_policy shdsl_policy[SHDA_MAX + 1] = {
-	[SHDA_ROLE]         = { .type = NLA_U8 },
-	[SHDA_LFF]          = { .type = NLA_U8 },
-	[SHDA_GHS_THR]      = { .type = NLA_U32 },
-	[SHDA_RATE]         = { .type = NLA_U32 },
-	[SHDA_AVERAGE_BPS]  = { .type = NLA_U32 },
-	[SHDA_PEAK_BPS]     = { .type = NLA_U32 },
-	[SHDA_LINK_STATE]   = { .type = NLA_U8 },
-	[SHDA_LINK_STATUS]  = { .type = NLA_U8 },
-	[SHDA_LINK_UPTIME]  = { .type = NLA_U32 },
-	[SHDA_NO_OF_NEGS]   = { .type = NLA_U32 },
-	[SHDA_NOISE_MARGIN] = { .type = NLA_U8 },
-	[SHDA_NONSTRICT]    = { .type = NLA_U8 },
-	[SHDA_LOW_JITTER]   = { .type = NLA_U8 },
-	[SHDA_EMF]          = { .type = NLA_U8 },
-	[SHDA_IFINDEX]      = { .type = NLA_U32 },
+	[SHDA_ROLE]               = { .type = NLA_U8 },
+	[SHDA_LFF]                = { .type = NLA_U8 },
+	[SHDA_GHS_THR]            = { .type = NLA_U32 },
+	[SHDA_RATE]               = { .type = NLA_U32 },
+	[SHDA_AVERAGE_BPS]        = { .type = NLA_U32 },
+	[SHDA_PEAK_BPS]           = { .type = NLA_U32 },
+	[SHDA_LINK_STATE]         = { .type = NLA_U8 },
+	[SHDA_LINK_STATUS]        = { .type = NLA_U8 },
+	[SHDA_LINK_UPTIME]        = { .type = NLA_U32 },
+	[SHDA_NO_OF_NEGS]         = { .type = NLA_U32 },
+	[SHDA_NOISE_MARGIN]       = { .type = NLA_U8 },
+	[SHDA_NONSTRICT]          = { .type = NLA_U8 },
+	[SHDA_LOW_JITTER]         = { .type = NLA_U8 },
+	[SHDA_EMF]                = { .type = NLA_U8 },
+	[SHDA_IFINDEX]            = { .type = NLA_U32 },
+	[SHDA_ACTUAL_RATE]        = { .type = NLA_U32 },
+	[SHDA_MEASURED_SNR]       = { .type = NLA_U8 },
+	[SHDA_BITS_P_SYM]         = { .type = NLA_U8 },
+	[SHDA_POW_BACKOFF]        = { .type = NLA_U8 },
+	[SHDA_POW_BACKOFF_FAREND] = { .type = NLA_U8 },
+	[SHDA_ATTENUATION]        = { .type = NLA_U8 },
+	[SHDA_MAX_RATE]           = { .type = NLA_U32 },
+	[SHDA_CAPABILITY_REGION]  = { .type = NLA_U8 },
+	[SHDA_NUM_REPEATERS]      = { .type = NLA_U8 },
+	[SHDA_NUM_WIREPAIR]       = { .type = NLA_U8 },
+	[SHDA_PSD]                = { .type = NLA_U8 },
+	[SHDA_REMOTE_ENABLED]     = { .type = NLA_U8 },
+	[SHDA_POWER_FEEDING]      = { .type = NLA_U8 },
+	[SHDA_CC_NOISE_MARGIN_UP] = { .type = NLA_U8 },
+	[SHDA_CC_NOISE_MARGIN_DOWN]= { .type = NLA_U8 },
+	[SHDA_WC_NOISE_MARGIN_UP] = { .type = NLA_U8 },
+	[SHDA_WC_NOISE_MARGIN_DOWN]= { .type = NLA_U8 },
+	[SHDA_USED_TARGET_MARGINS]= { .type = NLA_U8 },
+	[SHDA_REF_CLK]            = { .type = NLA_U8 },
+	[SHDA_LINE_PROBE]         = { .type = NLA_U8 },
 };
 
 /**
@@ -207,6 +249,9 @@ static int build_shdsl_msg(struct rtnl_shdsl *tmpl, int cmd, int flags,
 	if (tmpl->ce_mask & SHDSL_ATTR_EMF)
 		NLA_PUT_U8(msg, SHDA_EMF, tmpl->s_emf);
 
+	if (tmpl->ce_mask & SHDSL_ATTR_REGION)
+		NLA_PUT_U8(msg, SHDA_REGION, tmpl->s_region);
+
 	*result = msg;
 	return 0;
 
@@ -295,6 +340,7 @@ char *rtnl_shdsl_get_ifname(struct rtnl_shdsl *shdsl)
 void rtnl_shdsl_set_enabled(struct rtnl_shdsl *shdsl, int enabled)
 {
 	shdsl->s_enabled = enabled;
+	shdsl->ce_mask |= SHDSL_ATTR_ENABLED;
 }
 
 int rtnl_shdsl_get_enabled(struct rtnl_shdsl *shdsl)
@@ -417,6 +463,117 @@ int rtnl_shdsl_get_emf(struct rtnl_shdsl *shdsl)
 	return shdsl->s_emf;
 }
 
+void rtnl_shdsl_set_region(struct rtnl_shdsl *shdsl, int region)
+{
+	shdsl->s_region = region;
+	shdsl->ce_mask |= SHDSL_ATTR_REGION;
+}
+
+int rtnl_shdsl_get_region(struct rtnl_shdsl *shdsl)
+{
+	return shdsl->s_region;
+}
+
+int rtnl_shdsl_get_actual_rate(struct rtnl_shdsl *shdsl)
+{
+	return shdsl->s_actual_rate;
+}
+
+int rtnl_shdsl_get_measured_snr(struct rtnl_shdsl *shdsl)
+{
+	return shdsl->s_measured_snr;
+}
+
+int rtnl_shdsl_get_bits_p_sym(struct rtnl_shdsl *shdsl)
+{
+	return shdsl->s_bits_p_sym;
+}
+
+int rtnl_shdsl_get_pow_backoff(struct rtnl_shdsl *shdsl)
+{
+	return shdsl->s_pow_backoff;
+}
+
+int rtnl_shdsl_get_pow_backoff_farend(struct rtnl_shdsl *shdsl)
+{
+	return shdsl->s_pow_backoff_farend;
+}
+
+int rtnl_shdsl_get_attenuation(struct rtnl_shdsl *shdsl)
+{
+	return shdsl->s_attenuation;
+}
+
+int rtnl_shdsl_get_max_rate(struct rtnl_shdsl *shdsl)
+{
+	return shdsl->s_max_rate;
+}
+
+int rtnl_shdsl_get_capability_region(struct rtnl_shdsl *shdsl)
+{
+	return shdsl->s_capability_region;
+}
+
+int rtnl_shdsl_get_num_repeaters(struct rtnl_shdsl *shdsl)
+{
+	return shdsl->s_num_repeaters;
+}
+
+int rtnl_shdsl_get_num_wirepair(struct rtnl_shdsl *shdsl)
+{
+	return shdsl->s_num_wirepair;
+}
+
+int rtnl_shdsl_get_psd(struct rtnl_shdsl *shdsl)
+{
+	return shdsl->s_psd;
+}
+
+int rtnl_shdsl_get_remote_enabled(struct rtnl_shdsl *shdsl)
+{
+	return shdsl->s_remote_enabled;
+}
+
+int rtnl_shdsl_get_power_feeding(struct rtnl_shdsl *shdsl)
+{
+	return shdsl->s_power_feeding;
+}
+
+int rtnl_shdsl_get_cc_noise_margin_up(struct rtnl_shdsl *shdsl)
+{
+	return shdsl->s_cc_noise_margin_up;
+}
+
+int rtnl_shdsl_get_cc_noise_margin_down(struct rtnl_shdsl *shdsl)
+{
+	return shdsl->s_cc_noise_margin_down;
+}
+
+int rtnl_shdsl_get_wc_noise_margin_up(struct rtnl_shdsl *shdsl)
+{
+	return shdsl->s_wc_noise_margin_up;
+}
+
+int rtnl_shdsl_get_wc_noise_margin_down(struct rtnl_shdsl *shdsl)
+{
+	return shdsl->s_wc_noise_margin_down;
+}
+
+int rtnl_shdsl_get_used_target_margins(struct rtnl_shdsl *shdsl)
+{
+	return shdsl->s_used_target_margins;
+}
+
+int rtnl_shdsl_get_ref_clk(struct rtnl_shdsl *shdsl)
+{
+	return shdsl->s_ref_clk;
+}
+
+int rtnl_shdsl_get_line_probe(struct rtnl_shdsl *shdsl)
+{
+	return shdsl->s_line_probe;
+}
+
 int rtnl_shdsl_get_link_state(struct rtnl_shdsl *shdsl)
 {
 	if (shdsl->ce_mask & SHDSL_ATTR_LINK_STATE)
@@ -449,6 +606,11 @@ int rtnl_shdsl_get_no_of_negs(struct rtnl_shdsl *shdsl)
 		return -1;
 }
 
+char *rtnl_shdsl_get_idc_ver(struct rtnl_shdsl *shdsl)
+{
+	return shdsl->s_idc_ver;
+}
+
 /** @} */
 
 static uint64_t shdsl_compare(struct nl_object *_a, struct nl_object *_b,
@@ -462,6 +624,7 @@ static uint64_t shdsl_compare(struct nl_object *_a, struct nl_object *_b,
 
 	diff |= SHDSL_DIFF(FAMILY, a->s_family != b->s_family);
 	diff |= SHDSL_DIFF(CHANNO, a->s_channo != b->s_channo);
+	diff |= SHDSL_DIFF(ENABLED, a->s_enabled != b->s_enabled);
 	diff |= SHDSL_DIFF(ROLE, a->s_role != b->s_role);
 	diff |= SHDSL_DIFF(GHS_THR, a->s_ghs_thr != b->s_ghs_thr);
 	diff |= SHDSL_DIFF(RATE, a->s_rate != b->s_rate);
@@ -607,6 +770,11 @@ static int rtnl_shdsl_parse(struct nlmsghdr *n, struct rtnl_shdsl **result)
 		shdsl->ce_mask |= SHDSL_ATTR_IFNAME;
 	}
 
+	if (tb[SHDA_ENABLED]) {
+		shdsl->s_enabled = nla_get_u8(tb[SHDA_ENABLED]);
+		shdsl->ce_mask |= SHDSL_ATTR_ENABLED;
+	}
+
 	if (tb[SHDA_ROLE]) {
 		shdsl->s_role = nla_get_u8(tb[SHDA_ROLE]);
 		shdsl->ce_mask |= SHDSL_ATTR_ROLE;
@@ -657,6 +825,111 @@ static int rtnl_shdsl_parse(struct nlmsghdr *n, struct rtnl_shdsl **result)
 		shdsl->ce_mask |= SHDSL_ATTR_EMF;
 	}
 
+	if (tb[SHDA_REGION]) {
+		shdsl->s_region = nla_get_u8(tb[SHDA_REGION]);
+		shdsl->ce_mask |= SHDSL_ATTR_REGION;
+	}
+
+	if (tb[SHDA_ACTUAL_RATE]) {
+		shdsl->s_actual_rate = nla_get_u32(tb[SHDA_ACTUAL_RATE]);
+		shdsl->ce_mask |= SHDSL_ATTR_ACTUAL_RATE;
+	}
+
+	if (tb[SHDA_MEASURED_SNR]) {
+		shdsl->s_measured_snr = nla_get_u8(tb[SHDA_MEASURED_SNR]);
+		shdsl->ce_mask |= SHDSL_ATTR_MEASURED_SNR;
+	}
+
+	if (tb[SHDA_BITS_P_SYM]) {
+		shdsl->s_bits_p_sym = nla_get_u8(tb[SHDA_BITS_P_SYM]);
+		shdsl->ce_mask |= SHDSL_ATTR_BITS_P_SYM;
+	}
+
+	if (tb[SHDA_POW_BACKOFF]) {
+		shdsl->s_pow_backoff = nla_get_u8(tb[SHDA_POW_BACKOFF]);
+		shdsl->ce_mask |= SHDSL_ATTR_POW_BACKOFF;
+	}
+
+	if (tb[SHDA_POW_BACKOFF_FAREND]) {
+		shdsl->s_pow_backoff_farend = nla_get_u8(tb[SHDA_POW_BACKOFF_FAREND]);
+		shdsl->ce_mask |= SHDSL_ATTR_POW_BACKOFF_FAREND;
+	}
+
+	if (tb[SHDA_ATTENUATION]) {
+		shdsl->s_attenuation = nla_get_u8(tb[SHDA_ATTENUATION]);
+		shdsl->ce_mask |= SHDSL_ATTR_ATTENUATION;
+	}
+
+	if (tb[SHDA_MAX_RATE]) {
+		shdsl->s_max_rate = nla_get_u32(tb[SHDA_MAX_RATE]);
+		shdsl->ce_mask |= SHDSL_ATTR_MAX_RATE;
+	}
+
+	if (tb[SHDA_CAPABILITY_REGION]) {
+		shdsl->s_capability_region = nla_get_u8(tb[SHDA_CAPABILITY_REGION]);
+		shdsl->ce_mask |= SHDSL_ATTR_CAPABILITY_REGION;
+	}
+
+	if (tb[SHDA_NUM_REPEATERS]) {
+		shdsl->s_num_repeaters = nla_get_u8(tb[SHDA_NUM_REPEATERS]);
+		shdsl->ce_mask |= SHDSL_ATTR_NUM_REPEATERS;
+	}
+
+	if (tb[SHDA_NUM_WIREPAIR]) {
+		shdsl->s_num_wirepair = nla_get_u8(tb[SHDA_NUM_WIREPAIR]);
+		shdsl->ce_mask |= SHDSL_ATTR_NUM_WIREPAIR;
+	}
+
+	if (tb[SHDA_PSD]) {
+		shdsl->s_psd = nla_get_u8(tb[SHDA_PSD]);
+		shdsl->ce_mask |= SHDSL_ATTR_PSD;
+	}
+
+	if (tb[SHDA_REMOTE_ENABLED]) {
+		shdsl->s_remote_enabled = nla_get_u8(tb[SHDA_REMOTE_ENABLED]);
+		shdsl->ce_mask |= SHDSL_ATTR_REMOTE_ENABLED;
+	}
+
+	if (tb[SHDA_POWER_FEEDING]) {
+		shdsl->s_power_feeding = nla_get_u8(tb[SHDA_POWER_FEEDING]);
+		shdsl->ce_mask |= SHDSL_ATTR_POWER_FEEDING;
+	}
+
+	if (tb[SHDA_CC_NOISE_MARGIN_UP]) {
+		shdsl->s_cc_noise_margin_up = nla_get_u8(tb[SHDA_CC_NOISE_MARGIN_UP]);
+		shdsl->ce_mask |= SHDSL_ATTR_CC_NOISE_MARGIN_UP;
+	}
+
+	if (tb[SHDA_CC_NOISE_MARGIN_DOWN]) {
+		shdsl->s_cc_noise_margin_down = nla_get_u8(tb[SHDA_CC_NOISE_MARGIN_DOWN]);
+		shdsl->ce_mask |= SHDSL_ATTR_CC_NOISE_MARGIN_DOWN;
+	}
+
+	if (tb[SHDA_WC_NOISE_MARGIN_UP]) {
+		shdsl->s_wc_noise_margin_up = nla_get_u8(tb[SHDA_WC_NOISE_MARGIN_UP]);
+		shdsl->ce_mask |= SHDSL_ATTR_WC_NOISE_MARGIN_UP;
+	}
+
+	if (tb[SHDA_WC_NOISE_MARGIN_DOWN]) {
+		shdsl->s_wc_noise_margin_down = nla_get_u8(tb[SHDA_WC_NOISE_MARGIN_DOWN]);
+		shdsl->ce_mask |= SHDSL_ATTR_WC_NOISE_MARGIN_DOWN;
+	}
+
+	if (tb[SHDA_USED_TARGET_MARGINS]) {
+		shdsl->s_used_target_margins = nla_get_u8(tb[SHDA_USED_TARGET_MARGINS]);
+		shdsl->ce_mask |= SHDSL_ATTR_USED_TARGET_MARGINS;
+	}
+
+	if (tb[SHDA_REF_CLK]) {
+		shdsl->s_ref_clk = nla_get_u8(tb[SHDA_REF_CLK]);
+		shdsl->ce_mask |= SHDSL_ATTR_REF_CLK;
+	}
+
+	if (tb[SHDA_LINE_PROBE]) {
+		shdsl->s_line_probe = nla_get_u8(tb[SHDA_LINE_PROBE]);
+		shdsl->ce_mask |= SHDSL_ATTR_LINE_PROBE;
+	}
+
 	if (tb[SHDA_LINK_STATE]) {
 		shdsl->s_state = nla_get_u8(tb[SHDA_LINK_STATE]);
 		shdsl->ce_mask |= SHDSL_ATTR_LINK_STATE;
@@ -675,6 +948,11 @@ static int rtnl_shdsl_parse(struct nlmsghdr *n, struct rtnl_shdsl **result)
 	if (tb[SHDA_NO_OF_NEGS]) {
 		shdsl->s_no_of_negs = nla_get_u32(tb[SHDA_NO_OF_NEGS]);
 		shdsl->ce_mask |= SHDSL_ATTR_NO_OF_NEGS;
+	}
+
+	if (tb[SHDA_IDC_VER]) {
+		nla_strlcpy(shdsl->s_idc_ver, tb[SHDA_IDC_VER], sizeof(shdsl->s_idc_ver));
+		shdsl->ce_mask |= SHDSL_ATTR_IDC_VER;
 	}
 
 	*result = shdsl;
