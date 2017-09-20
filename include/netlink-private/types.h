@@ -18,6 +18,7 @@
 #include <netlink/route/qdisc.h>
 #include <netlink/route/rtnl.h>
 #include <netlink/route/route.h>
+#include <netlink/route/shdsl.h>
 #include <netlink/idiag/idiagnl.h>
 #include <netlink/netfilter/ct.h>
 #include <netlink-private/route/tc-api.h>
@@ -1319,6 +1320,28 @@ struct rtnl_shdsl {
 	uint8_t    s_nonstrict;
 	uint8_t    s_low_jitter;
 	uint8_t    s_emf;
+	uint32_t   s_actual_rate;
+	uint8_t    s_measured_snr;
+	uint8_t    s_bits_p_sym;
+	uint8_t    s_pow_backoff;
+	uint8_t    s_pow_backoff_farend;
+	uint8_t    s_region;
+	char       s_idc_ver[IDC_VER_STR];
+	uint8_t    s_attenuation;
+	uint32_t   s_max_rate;
+	uint8_t    s_capability_region;
+	uint8_t    s_num_repeaters;
+	uint8_t    s_num_wirepair;
+	uint8_t    s_psd;
+	uint8_t    s_remote_enabled;
+	uint8_t    s_power_feeding;
+	uint8_t    s_cc_noise_margin_up;
+	uint8_t    s_cc_noise_margin_down;
+	uint8_t    s_wc_noise_margin_up;
+	uint8_t    s_wc_noise_margin_down;
+	uint8_t    s_used_target_margins;
+	uint8_t    s_ref_clk;
+	uint8_t    s_line_probe;
 };
 
 #endif

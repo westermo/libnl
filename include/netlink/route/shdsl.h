@@ -20,6 +20,7 @@
 extern "C" {
 #endif
 
+#define IDC_VER_STR 8*4
 
 struct rtnl_shdsl;
 
@@ -60,10 +61,33 @@ void rtnl_shdsl_set_low_jitter(struct rtnl_shdsl *shdsl, int lj);
 int rtnl_shdsl_get_low_jitter(struct rtnl_shdsl *shdsl);
 void rtnl_shdsl_set_emf(struct rtnl_shdsl *shdsl, int emf);
 int rtnl_shdsl_get_emf(struct rtnl_shdsl *shdsl);
+void rtnl_shdsl_set_region(struct rtnl_shdsl *shdsl, int region);
+int rtnl_shdsl_get_region(struct rtnl_shdsl *shdsl);
+int rtnl_shdsl_get_actual_rate(struct rtnl_shdsl *shdsl);
+int rtnl_shdsl_get_measured_snr(struct rtnl_shdsl *shdsl);
+int rtnl_shdsl_get_bits_p_sym(struct rtnl_shdsl *shdsl);
+int rtnl_shdsl_get_pow_backoff(struct rtnl_shdsl *shdsl);
+int rtnl_shdsl_get_pow_backoff_farend(struct rtnl_shdsl *shdsl);
+int rtnl_shdsl_get_attenuation(struct rtnl_shdsl *shdsl);
+int rtnl_shdsl_get_max_rate(struct rtnl_shdsl *shdsl);
+int rtnl_shdsl_get_capability_region(struct rtnl_shdsl *shdsl);
+int rtnl_shdsl_get_num_repeaters(struct rtnl_shdsl *shdsl);
+int rtnl_shdsl_get_num_wirepair(struct rtnl_shdsl *shdsl);
+int rtnl_shdsl_get_psd(struct rtnl_shdsl *shdsl);
+int rtnl_shdsl_get_remote_enabled(struct rtnl_shdsl *shdsl);
+int rtnl_shdsl_get_power_feeding(struct rtnl_shdsl *shdsl);
+int rtnl_shdsl_get_cc_noise_margin_up(struct rtnl_shdsl *shdsl);
+int rtnl_shdsl_get_cc_noise_margin_down(struct rtnl_shdsl *shdsl);
+int rtnl_shdsl_get_wc_noise_margin_up(struct rtnl_shdsl *shdsl);
+int rtnl_shdsl_get_wc_noise_margin_down(struct rtnl_shdsl *shdsl);
+int rtnl_shdsl_get_used_target_margins(struct rtnl_shdsl *shdsl);
+int rtnl_shdsl_get_ref_clk(struct rtnl_shdsl *shdsl);
+int rtnl_shdsl_get_line_probe(struct rtnl_shdsl *shdsl);
 int rtnl_shdsl_get_link_state(struct rtnl_shdsl *shdsl);
 int rtnl_shdsl_get_link_status(struct rtnl_shdsl *shdsl);
 int rtnl_shdsl_get_link_uptime(struct rtnl_shdsl *shdsl);
 int rtnl_shdsl_get_no_of_negs(struct rtnl_shdsl *shdsl);
+char *rtnl_shdsl_get_idc_ver(struct rtnl_shdsl *shdsl);
 char *rtnl_shdsl_role2str(uint8_t role);
 char *rtnl_shdsl_state2str(uint8_t state);
 
