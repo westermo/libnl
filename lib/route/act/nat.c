@@ -121,7 +121,7 @@ static void nat_dump_line(struct rtnl_tc *tc, void *data,
 /**
  * Set old IPv4 address on a netlink NAT action object
  * @arg act        Action object
- * @arg addr       Binary IPv4 address in network byte order
+ * @arg addr       Binary IPv4 address in host byte order
  *
  * @return 0 on success or negative error code in case of an error.
  */
@@ -132,7 +132,19 @@ int rtnl_nat_set_old_addr(struct rtnl_act *act, uint32_t addr)
 	if (!(nat = (struct tc_nat *) rtnl_tc_data(TC_CAST(act))))
 		return -NLE_NOMEM;
 
-	nat->old_addr = addr;
+	nat->old_addr = htonl(addr);
+
+	return NLE_SUCCESS;
+}
+
+int rtnl_nat_set_old_in_addr(struct rtnl_act *act, const struct in_addr *addr)
+{
+	struct tc_nat *nat;
+
+	if (!(nat = (struct tc_nat *) rtnl_tc_data(TC_CAST(act))))
+		return -NLE_NOMEM;
+
+	nat->old_addr = addr->s_addr;
 
 	return NLE_SUCCESS;
 }
@@ -150,7 +162,7 @@ uint32_t rtnl_nat_get_old_addr(struct rtnl_act *act)
 /**
  * Set new IPv4 address on a netlink NAT action object
  * @arg act        Action object
- * @arg addr       Binary IPv4 address in network byte order
+ * @arg addr       Binary IPv4 address in host byte order
  *
  * @return 0 on success or negative error code in case of an error.
  */
@@ -161,7 +173,19 @@ int rtnl_nat_set_new_addr(struct rtnl_act *act, uint32_t addr)
 	if (!(nat = (struct tc_nat *) rtnl_tc_data(TC_CAST(act))))
 		return -NLE_NOMEM;
 
-	nat->new_addr = addr;
+	nat->new_addr = htonl(addr);
+
+	return NLE_SUCCESS;
+}
+
+int rtnl_nat_set_new_in_addr(struct rtnl_act *act, const struct in_addr *addr)
+{
+	struct tc_nat *nat;
+
+	if (!(nat = (struct tc_nat *) rtnl_tc_data(TC_CAST(act))))
+		return -NLE_NOMEM;
+
+	nat->new_addr = addr->s_addr;
 
 	return NLE_SUCCESS;
 }
@@ -179,18 +203,19 @@ uint32_t rtnl_nat_get_new_addr(struct rtnl_act *act)
 /**
  * Set IPv4 address mask on a netlink NAT action object
  * @arg act        Action object
- * @arg mask       Binary IPv4 address mask in network byte order
+ * @arg mask       IPv4 address mask
  *
  * @return 0 on success or negative error code in case of an error.
  */
-int rtnl_nat_set_mask(struct rtnl_act *act, uint32_t mask)
+int rtnl_nat_set_mask(struct rtnl_act *act, uint8_t bitmask)
 {
 	struct tc_nat *nat;
+	uint32_t mask = 0xFFFFFFFF << (32 - bitmask);
 
 	if (!(nat = (struct tc_nat *) rtnl_tc_data(TC_CAST(act))))
 		return -NLE_NOMEM;
 
-	nat->mask = mask;
+	nat->mask = htonl(mask);
 
 	return NLE_SUCCESS;
 }
