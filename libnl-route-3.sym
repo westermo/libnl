@@ -973,8 +973,10 @@ global:
 	rtnl_route_lookup;
 
 	rtnl_nat_set_old_addr;
+	rtnl_nat_set_old_in_addr;
 	rtnl_nat_get_old_addr;
 	rtnl_nat_set_new_addr;
+	rtnl_nat_set_new_in_addr;
 	rtnl_nat_get_new_addr;
 	rtnl_nat_set_mask;
 	rtnl_nat_get_mask;
