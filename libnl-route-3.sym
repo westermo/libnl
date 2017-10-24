@@ -1061,6 +1061,14 @@ global:
 	rtnl_shdsl_role2str;
 	rtnl_shdsl_state2str;
 	rtnl_link_bridge_vlan_set_sid;
+
+	rtnl_mall_set_classid;
+	rtnl_mall_get_classid;
+	rtnl_mall_set_flags;
+	rtnl_mall_get_flags;
+	rtnl_mall_add_action;
+	rtnl_mall_get_action;
+	rtnl_mall_del_action;
 } libnl_3_2_27;
 
 libnl_3_2_29 {
