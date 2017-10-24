@@ -95,7 +95,7 @@ libnl_route_3_la_SOURCES = \
 	route/rule.c route/tc.c route/classid.c route/mdb.c route/shdsl.c\
 	\
 	route/cls/fw.c route/cls/police.c route/cls/u32.c route/cls/basic.c \
-	route/cls/cgroup.c \
+	route/cls/cgroup.c route/cls/mall.c \
 	\
 	route/act/mirred.c \
 	route/act/skbedit.c \
