@@ -399,6 +399,7 @@ struct rtnl_cls *rtnl_cls_get_by_prio(struct nl_cache *cache, int ifindex,
 				      uint32_t parent, uint16_t prio)
 {
 	struct rtnl_cls *cls, *last_cls;
+	int handle = -1;
 	int found = 0;
 
 	if (cache->c_ops != &rtnl_cls_ops)
@@ -407,8 +408,18 @@ struct rtnl_cls *rtnl_cls_get_by_prio(struct nl_cache *cache, int ifindex,
 	nl_list_for_each_entry(cls, &cache->c_items, ce_list) {
 		if ((cls->c_parent == parent) && (cls->c_ifindex == ifindex)
 		    && (cls->c_prio == prio)) {
-			found++;
-			last_cls = cls;
+		        if (handle < 0) {
+		                if (!cls->c_handle)
+			                continue;
+				handle = cls->c_handle;
+			}
+
+			if (handle == cls->c_handle) {
+			        found++;
+			        last_cls = cls;
+			}
+			else
+			        break;
 		}
 	}
 
