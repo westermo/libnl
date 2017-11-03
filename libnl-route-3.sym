@@ -982,6 +982,7 @@ global:
 	rtnl_neigh_ll_get;
 	rtnl_neigh_get_entry_state;
 	rtnl_neigh_get_updated;
+	rtnl_neigh_get_by_vlan;
 
 	rtnl_route_lookup;
 
