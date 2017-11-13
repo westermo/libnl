@@ -1078,6 +1078,7 @@ global:
 	rtnl_htb_get_rate64;
 	rtnl_htb_set_ceil64;
 	rtnl_htb_set_rate64;
+	rtnl_link_bridge_unset_attr;
 	rtnl_link_geneve_alloc;
 	rtnl_link_geneve_get_flags;
 	rtnl_link_geneve_get_id;

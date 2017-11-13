@@ -78,6 +78,7 @@ extern int	rtnl_link_bridge_vlan_foreach(struct rtnl_link *,
 extern int	rtnl_link_bridge_unset_flags(struct rtnl_link *, unsigned int);
 extern int	rtnl_link_bridge_set_flags(struct rtnl_link *, unsigned int);
 extern int	rtnl_link_bridge_get_flags(struct rtnl_link *);
+extern int      rtnl_link_bridge_unset_attr(struct rtnl_link *link, unsigned int attr);
 
 extern int	rtnl_link_bridge_set_self(struct rtnl_link *);
 
