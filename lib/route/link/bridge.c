@@ -301,6 +301,10 @@ static int bridge_fill_pi(struct rtnl_link *link, struct nl_msg *msg,
 			NLA_PUT_U8(msg, IFLA_BRPORT_LEARNING_SYNC,
 			           bd->b_flags & RTNL_BRIDGE_LEARNING_SYNC);
 		}
+		if (bd->b_flags_mask & RTNL_BRIDGE_FLUSH) {
+		        NLA_PUT_U8(msg, IFLA_BRPORT_FLUSH,
+			           bd->b_flags & RTNL_BRIDGE_FLUSH);
+		}
 	}
 
 	if (bd->ce_mask & BRIDGE_ATTR_COST)
