@@ -1144,6 +1144,34 @@ int rtnl_link_bridge_get_flags(struct rtnl_link *link)
 }
 
 /**
+ * Unset bridge attributes
+ * @arg link		Link object of type bridge
+ * @arg attr		Bridging attributes to unset
+ *
+ * Valid attributes are:
+ *   - BRIDGE_ATTR_PORT_STATE
+ *   - BRIDGE_ATTR_PRIORITY
+ *   - BRIDGE_ATTR_COST
+ *
+ * @see rtnl_link_bridge_set_cost()
+ * @see rtnl_link_bridge_set_priority()
+ * @see rtnl_link_bridge_set_port_state()
+ *
+ * @return 0 on success or a negative error code.
+ * @retval -NLE_OPNOTSUPP Link is not a bridge
+ */
+int rtnl_link_bridge_unset_attr(struct rtnl_link *link, unsigned int attr)
+{
+        struct bridge_data *bd = bridge_data(link);
+
+	IS_BRIDGE_LINK_ASSERT(link);
+
+	bd->ce_mask &= ~attr;
+
+	return 0;
+}
+
+/**
  * Set link change type to self
  * @arg link		Link Object of type bridge
  *

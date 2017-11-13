@@ -1248,4 +1248,5 @@ global:
 	rtnl_neigh_get_updated;
 	rtnl_link_bridge_vlan_set_sid;
 	rtnl_link_bridge_vlan_get_sid;
+	rtnl_link_bridge_unset_attr;
 } libnl_3_4;
