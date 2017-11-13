@@ -1231,4 +1231,6 @@ global:
 	rtnl_mrport_alloc;
 	rtnl_mrport_free;
 	rtnl_mrport_get_grpifindex;
+
+	rtnl_link_bridge_unset_attr;
 } libnl_3_2_29;
