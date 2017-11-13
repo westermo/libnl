@@ -691,7 +691,7 @@ static int bridge_port_fill_af(struct rtnl_link *link, struct nl_msg *msg, void 
 {
 	struct bridge_data *bd = data;
 
-	if ((bd->ce_mask & BRIDGE_ATTR_SELF)||(bd->ce_mask & BRIDGE_ATTR_HWMODE))
+	if (rtnl_link_get_master(link) == rtnl_link_get_ifindex(link))
 		NLA_PUT_U16(msg, IFLA_BRIDGE_FLAGS, BRIDGE_FLAGS_SELF);
 
 	if (bd->ce_mask & BRIDGE_ATTR_HWMODE)
