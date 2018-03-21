@@ -150,10 +150,12 @@ static void macvlan_free(struct rtnl_link *link)
 
 	mvi = link->l_info;
 
-	for (i = 0; i < mvi->mvi_maccount; i++)
-		nl_addr_put(mvi->mvi_macaddr[i]);
-	free(mvi->mvi_macaddr);
-	free(mvi);
+	if (mvi != NULL) {
+		for (i = 0; i < mvi->mvi_maccount; i++)
+			nl_addr_put(mvi->mvi_macaddr[i]);
+		free(mvi->mvi_macaddr);
+		free(mvi);
+	}
 
 	link->l_info = NULL;
 }
