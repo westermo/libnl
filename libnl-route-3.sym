@@ -1249,4 +1249,6 @@ global:
 	rtnl_qdisc_mqprio_get_min_rate;
 	rtnl_qdisc_mqprio_set_max_rate;
 	rtnl_qdisc_mqprio_get_max_rate;
+	rtnl_tc_set_chain;
+	rtnl_tc_get_chain;
 } libnl_3_2_29;
