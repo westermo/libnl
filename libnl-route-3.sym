@@ -1268,4 +1268,14 @@ global:
 	rtnl_flower_append_action;
 	rtnl_flower_del_action;
 	rtnl_flower_get_action;
+	rtnl_vlan_set_mode;
+	rtnl_vlan_get_mode;
+	rtnl_vlan_set_action;
+	rtnl_vlan_get_action;
+	rtnl_vlan_set_protocol;
+	rtnl_vlan_get_protocol;
+	rtnl_vlan_set_vlan_id;
+	rtnl_vlan_get_vlan_id;
+	rtnl_vlan_set_vlan_prio;
+	rtnl_vlan_get_vlan_prio;
 } libnl_3_2_29;
