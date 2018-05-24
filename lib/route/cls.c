@@ -464,6 +464,20 @@ static int cls_msg_parser(struct nl_cache_ops *ops, struct sockaddr_nl *who,
 	if (cls->c_protocol)
 		cls->ce_mask |= CLS_ATTR_PROTOCOL;
 
+	/* TEMP: THIS IS NOT NICE, FIGURE OUT SMTHNG BETTER */
+	if (!cls->c_handle) {
+	        err = 0;
+		goto errout;
+	}
+
+	if (cls->c_handle >= 0x8000) {
+	        if ((cls->c_handle & 0x0800) == 0) {
+		        err = 0;
+			goto errout;
+		}
+	}
+	/* ********************************* */
+
 	err = pp->pp_cb(OBJ_CAST(cls), pp);
 errout:
 	rtnl_cls_put(cls);
