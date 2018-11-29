@@ -113,6 +113,7 @@ libnlinclude_netlink_route_HEADERS = \
 	include/netlink/route/pktloc.h \
 	include/netlink/route/qdisc.h \
 	include/netlink/route/route.h \
+	include/netlink/route/mroute.h \
 	include/netlink/route/rtnl.h \
 	include/netlink/route/rule.h \
 	include/netlink/route/tc-api.h \
@@ -451,6 +452,7 @@ lib_libnl_route_3_la_SOURCES = \
 	lib/route/qdisc/sfq.c \
 	lib/route/qdisc/tbf.c \
 	lib/route/route.c \
+	lib/route/mroute.c \
 	lib/route/route_obj.c \
 	lib/route/route_utils.c \
 	lib/route/rtnl.c \
