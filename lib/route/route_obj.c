@@ -664,6 +664,7 @@ int rtnl_route_set_family(struct rtnl_route *route, uint8_t family)
 	case AF_INET6:
 	case AF_DECnet:
 	case AF_MPLS:
+	case RTNL_FAMILY_IPMR:
 		route->rt_family = family;
 		route->ce_mask |= ROUTE_ATTR_FAMILY;
 		return 0;
@@ -940,6 +941,9 @@ int rtnl_route_guess_scope(struct rtnl_route *route)
 		return RT_SCOPE_HOST;
 
 	if (route->rt_family == AF_MPLS)
+		return RT_SCOPE_UNIVERSE;
+
+	if (route->rt_family == RTNL_FAMILY_IPMR)
 		return RT_SCOPE_UNIVERSE;
 
 	if (!nl_list_empty(&route->rt_nexthops)) {
