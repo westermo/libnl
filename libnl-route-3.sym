@@ -1278,4 +1278,12 @@ global:
 	rtnl_vlan_get_vlan_id;
 	rtnl_vlan_set_vlan_prio;
 	rtnl_vlan_get_vlan_prio;
+
+	rtnl_mroute_alloc;
+	rtnl_mroute_alloc_cache;
+	rtnl_mroute_add_cache;
+	rtnl_mroute_delete_cache;
+	rtnl_mroute_get_by_dst;
+	rtnl_mroute_add;
+	rtnl_mroute_delete;
 } libnl_3_2_29;
