@@ -24,6 +24,28 @@
 extern "C" {
 #endif
 
+/** @cond SKIP */
+#define ROUTE_ATTR_FAMILY    0x000001
+#define ROUTE_ATTR_TOS       0x000002
+#define ROUTE_ATTR_TABLE     0x000004
+#define ROUTE_ATTR_PROTOCOL  0x000008
+#define ROUTE_ATTR_SCOPE     0x000010
+#define ROUTE_ATTR_TYPE      0x000020
+#define ROUTE_ATTR_FLAGS     0x000040
+#define ROUTE_ATTR_DST       0x000080
+#define ROUTE_ATTR_SRC       0x000100
+#define ROUTE_ATTR_IIF       0x000200
+#define ROUTE_ATTR_OIF       0x000400
+#define ROUTE_ATTR_GATEWAY   0x000800
+#define ROUTE_ATTR_PRIO      0x001000
+#define ROUTE_ATTR_PREF_SRC  0x002000
+#define ROUTE_ATTR_METRICS   0x004000
+#define ROUTE_ATTR_MULTIPATH 0x008000
+#define ROUTE_ATTR_REALMS    0x010000
+#define ROUTE_ATTR_CACHEINFO 0x020000
+#define ROUTE_ATTR_TTL_PROPAGATE 0x040000
+/** @endcond */
+
 /**
  * @ingroup route
  * When passed to rtnl_route_alloc_cache() the cache will
@@ -126,6 +148,12 @@ extern int	rtnl_route_read_protocol_names(const char *);
 
 extern char *	rtnl_route_metric2str(int, char *, size_t);
 extern int	rtnl_route_str2metric(const char *);
+extern int      rtnl_route_parse_multipath(struct rtnl_route *route, struct nlattr *attr);
+extern int      rtnl_route_put_via(struct nl_msg *msg, struct nl_addr *addr);
+extern uint32_t route_id_attrs_get(struct nl_object *obj);
+extern char *   route_attrs2str(int attrs, char *buf, size_t len);
+extern void     route_dump_line(struct nl_object *a, struct nl_dump_params *p);
+extern void     route_dump_details(struct nl_object *a, struct nl_dump_params *p);
 
 #ifdef __cplusplus
 }
