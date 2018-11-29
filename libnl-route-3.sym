@@ -1266,4 +1266,11 @@ global:
 	rtnl_flower_append_action;
 	rtnl_flower_del_action;
 	rtnl_flower_get_action;
+	rtnl_mroute_alloc;
+	rtnl_mroute_alloc_cache;
+	rtnl_mroute_add_cache;
+	rtnl_mroute_delete_cache;
+	rtnl_mroute_get_by_dst;
+	rtnl_mroute_add;
+	rtnl_mroute_delete;
 } libnl_3_4;
