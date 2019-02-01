@@ -76,6 +76,10 @@ static int vlan_alloc(struct rtnl_link *link)
 		if ((vi = calloc(1, sizeof(*vi))) == NULL)
 			return -NLE_NOMEM;
 
+		vi->vi_negress = 0;
+		vi->vi_egress_size = 32;
+		vi->vi_egress_qos = calloc(vi->vi_egress_size, sizeof(*vi->vi_egress_qos));
+
 		link->l_info = vi;
 	}
 
