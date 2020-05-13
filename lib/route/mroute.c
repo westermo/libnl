@@ -593,7 +593,8 @@ struct nl_object_ops mroute_obj_ops = {
 	.oo_attrs2str		= route_attrs2str,
 	.oo_id_attrs		= (ROUTE_ATTR_FAMILY | ROUTE_ATTR_TABLE |
 				   ROUTE_ATTR_DST | ROUTE_ATTR_IIF |
-				   ROUTE_ATTR_TYPE | ROUTE_ATTR_FLAGS),
+				   ROUTE_ATTR_TYPE | ROUTE_ATTR_FLAGS |
+				   ROUTE_ATTR_MULTIPATH | ROUTE_ATTR_SRC),
 	.oo_id_attrs_get	= route_id_attrs_get,
 };
 
