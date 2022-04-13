@@ -675,6 +675,10 @@ struct rtnl_flower
         struct nl_data  *       cf_src_mac_mask;
         struct nl_data  *       cf_dst_mac;
         struct nl_data  *       cf_dst_mac_mask;
+	struct nl_addr *	cf_ipv4_src;
+	uint32_t	        cf_ipv4_src_mask;
+	struct nl_addr *	cf_ipv4_dst;
+	uint32_t	        cf_ipv4_dst_mask;
         uint8_t                 cf_ip_dscp;
         uint8_t                 cf_ip_dscp_mask;
         uint32_t                cf_flags;

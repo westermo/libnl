@@ -45,6 +45,13 @@ extern int	rtnl_flower_get_src_mac(struct rtnl_cls *, unsigned char *,
 extern int	rtnl_flower_set_ip_dscp(struct rtnl_cls *, uint8_t, uint8_t);
 extern int	rtnl_flower_get_ip_dscp(struct rtnl_cls *, uint8_t *, uint8_t *);
 
+extern int      rtnl_flower_set_ipv4_src(struct rtnl_cls *, int, int);
+extern int      rtnl_flower_get_ipv4_src(struct rtnl_cls *, struct nl_addr *,
+					 uint32_t *);
+extern int      rtnl_flower_set_ipv4_dst(struct rtnl_cls *, int, int);
+extern int      rtnl_flower_get_ipv4_dst(struct rtnl_cls *, struct nl_addr *,
+					 uint32_t *);
+
 extern int	rtnl_flower_set_flags(struct rtnl_cls *, int);
 
 extern int	rtnl_flower_append_action(struct rtnl_cls *, struct rtnl_act *);
