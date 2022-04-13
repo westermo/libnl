@@ -1263,6 +1263,10 @@ global:
 	rtnl_flower_get_src_mac;
 	rtnl_flower_set_ip_dscp;
 	rtnl_flower_get_ip_dscp;
+	rtnl_flower_set_ipv4_src;
+	rtnl_flower_get_ipv4_src;
+	rtnl_flower_set_ipv4_dst;
+	rtnl_flower_get_ipv4_dst;
 	rtnl_flower_set_flags;
 	rtnl_flower_append_action;
 	rtnl_flower_del_action;
