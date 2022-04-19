@@ -1312,3 +1312,11 @@ global:
 	rtnl_police_set_linklayer;
 	rtnl_police_get_linklayer;
 } libnl_3_5;
+
+libnl_3_7 {
+global:
+	rtnl_flower_set_ipv4_src;
+	rtnl_flower_get_ipv4_src;
+	rtnl_flower_set_ipv4_dst;
+	rtnl_flower_get_ipv4_dst;
+} libnl_3_6;

@@ -27,6 +27,10 @@
 #define FLOWER_ATTR_IP_DSCP       (1 << 9)
 #define FLOWER_ATTR_IP_DSCP_MASK  (1 << 10)
 #define FLOWER_ATTR_PROTO         (1 << 11)
+#define FLOWER_ATTR_IPV4_SRC      (1 << 12)
+#define FLOWER_ATTR_IPV4_SRC_MASK (1 << 13)
+#define FLOWER_ATTR_IPV4_DST      (1 << 14)
+#define FLOWER_ATTR_IPV4_DST_MASK (1 << 15)
 /** @endcond */
 
 #define FLOWER_DSCP_MAX             0xe0
@@ -46,6 +50,10 @@ static struct nla_policy flower_policy[TCA_FLOWER_MAX + 1] = {
 	[TCA_FLOWER_KEY_IP_TOS]        = { .type = NLA_U8 },
 	[TCA_FLOWER_KEY_IP_TOS_MASK]   = { .type = NLA_U8 },
 	[TCA_FLOWER_KEY_VLAN_ETH_TYPE] = { .type = NLA_U16 },
+	[TCA_FLOWER_KEY_IPV4_SRC]      = { .type = NLA_U32 },
+	[TCA_FLOWER_KEY_IPV4_SRC_MASK] = { .type = NLA_U32 },
+	[TCA_FLOWER_KEY_IPV4_DST]      = { .type = NLA_U32 },
+	[TCA_FLOWER_KEY_IPV4_DST_MASK] = { .type = NLA_U32 },
 };
 
 static int flower_msg_parser(struct rtnl_tc *tc, void *data)
@@ -121,6 +129,35 @@ static int flower_msg_parser(struct rtnl_tc *tc, void *data)
 		f->cf_mask |= FLOWER_ATTR_IP_DSCP_MASK;
 	}
 
+	if (tb[TCA_FLOWER_KEY_IPV4_SRC]) {
+	        f->cf_ipv4_src = nl_addr_alloc_attr(tb[TCA_FLOWER_KEY_IPV4_SRC],
+						    AF_INET);
+		if (!f->cf_ipv4_src)
+		        return -NLE_NOMEM;
+
+		f->cf_mask |= FLOWER_ATTR_IPV4_SRC;
+	}
+
+	if (tb[TCA_FLOWER_KEY_IPV4_SRC_MASK]) {
+		f->cf_ipv4_src_mask = nla_get_u32(tb[TCA_FLOWER_KEY_IPV4_SRC_MASK]);
+		f->cf_mask |= FLOWER_ATTR_IPV4_SRC_MASK;
+	}
+
+	if (tb[TCA_FLOWER_KEY_IPV4_DST]) {
+	        f->cf_ipv4_dst = nl_addr_alloc_attr(tb[TCA_FLOWER_KEY_IPV4_DST],
+						    AF_INET);
+
+		if (!f->cf_ipv4_dst)
+		        return -NLE_NOMEM;
+
+		f->cf_mask |= FLOWER_ATTR_IPV4_DST;
+	}
+
+	if (tb[TCA_FLOWER_KEY_IPV4_DST_MASK]) {
+		f->cf_ipv4_dst_mask = nla_get_u32(tb[TCA_FLOWER_KEY_IPV4_DST_MASK]);
+		f->cf_mask |= FLOWER_ATTR_IPV4_DST_MASK;
+	}
+
 	return 0;
 }
 
@@ -171,6 +208,18 @@ static int flower_msg_fill(struct rtnl_tc *tc, void *data, struct nl_msg *msg)
 	if (f->cf_mask & FLOWER_ATTR_IP_DSCP_MASK)
 		NLA_PUT_U8(msg, TCA_FLOWER_KEY_IP_TOS_MASK, f->cf_ip_dscp_mask);
 
+	if (f->cf_mask & FLOWER_ATTR_IPV4_SRC)
+	        NLA_PUT_ADDR(msg, TCA_FLOWER_KEY_IPV4_SRC, f->cf_ipv4_src);
+
+	if (f->cf_mask & FLOWER_ATTR_IPV4_SRC_MASK)
+	        NLA_PUT_U32(msg, TCA_FLOWER_KEY_IPV4_SRC_MASK, f->cf_ipv4_src_mask);
+
+	if (f->cf_mask & FLOWER_ATTR_IPV4_DST)
+	        NLA_PUT_ADDR(msg, TCA_FLOWER_KEY_IPV4_DST, f->cf_ipv4_dst);
+
+	if (f->cf_mask & FLOWER_ATTR_IPV4_DST_MASK)
+	        NLA_PUT_U32(msg, TCA_FLOWER_KEY_IPV4_DST_MASK, f->cf_ipv4_dst_mask);
+
 	return 0;
 
 nla_put_failure:
@@ -183,6 +232,12 @@ static void flower_free_data(struct rtnl_tc *tc, void *data)
 
 	if (f->cf_act)
 		rtnl_act_put_all(&f->cf_act);
+
+	if (f->cf_ipv4_src)
+	        nl_addr_put(f->cf_ipv4_src);
+
+	if (f->cf_ipv4_dst)
+	        nl_addr_put(f->cf_ipv4_dst);
 }
 
 static int flower_clone(void *_dst, void *_src)
@@ -217,6 +272,12 @@ static int flower_clone(void *_dst, void *_src)
 		dst->cf_act->a_next = NULL;   /* Only clone first in chain */
 	}
 
+	if (src->cf_ipv4_src && !(dst->cf_ipv4_src = nl_addr_clone(src->cf_ipv4_src)))
+	        return -NLE_NOMEM;
+
+	if (src->cf_ipv4_dst && !(dst->cf_ipv4_dst = nl_addr_clone(src->cf_ipv4_dst)))
+	        return -NLE_NOMEM;
+
 	return 0;
 }
 
@@ -224,6 +285,7 @@ static void flower_dump_details(struct rtnl_tc *tc, void *data,
                                 struct nl_dump_params *p)
 {
 	struct rtnl_flower *f = data;
+	char addr[INET_ADDRSTRLEN];
 
 	if (!f)
 		return;
@@ -272,6 +334,16 @@ static void flower_dump_details(struct rtnl_tc *tc, void *data,
 
 	if (f->cf_mask & FLOWER_ATTR_IP_DSCP_MASK)
 		nl_dump(p, " dscp_mask %u", f->cf_ip_dscp_mask);
+
+	if (f->cf_mask & FLOWER_ATTR_IPV4_SRC)
+		nl_dump(p, "IPv4 src %s/%u\n", nl_addr2str(f->cf_ipv4_src, addr,
+							   sizeof(addr)),
+			f->cf_ipv4_src_mask);
+
+	if (f->cf_mask & FLOWER_ATTR_IPV4_DST)
+		nl_dump(p, "IPv4 dst %s/%u\n", nl_addr2str(f->cf_ipv4_dst, addr,
+							   sizeof(addr)),
+			f->cf_ipv4_dst_mask);
 }
 
 /**
@@ -594,6 +666,124 @@ int rtnl_flower_get_ip_dscp(struct rtnl_cls *cls, uint8_t *dscp, uint8_t *mask)
 
 	*dscp = f->cf_ip_dscp;
 	*mask = f->cf_ip_dscp_mask;
+
+	return 0;
+}
+
+/**
+ * Set IPv4 source address for flower classifier
+ * @arg cls		Flower classifier.
+ * @arg addr		IPv4 source address
+ * @arg mask		mask for IPv4 source address
+ * @return 0 on success or a negative error code.
+ */
+int rtnl_flower_set_ipv4_src(struct rtnl_cls *cls, int addr, int mask)
+{
+	struct rtnl_flower *f;
+
+	if (!(f = rtnl_tc_data(TC_CAST(cls))))
+		return -NLE_NOMEM;
+
+	if (addr) {
+		f->cf_ipv4_src = nl_addr_build(AF_INET,
+					       (unsigned char *)&addr,
+					       sizeof(__be32));
+
+		f->cf_mask |= FLOWER_ATTR_IPV4_SRC;
+
+		if (mask) {
+			uint32_t m = 0xFFFFFFFF << (32 - mask);
+			f->cf_ipv4_src_mask = htonl(m);
+			f->cf_mask |= FLOWER_ATTR_IPV4_SRC_MASK;
+		}
+
+		return 0;
+	}
+
+	return -NLE_FAILURE;
+}
+
+/**
+ * Get IPv4 source address for flower classifier
+ * @arg cls		Flower classifier.
+ * @arg addr		IPv4 source address
+ * @arg mask		mask for IPv4 source address
+ * @return 0 on success or a negative error code.
+ */
+int rtnl_flower_get_ipv4_src(struct rtnl_cls *cls, struct nl_addr *addr,
+			     uint32_t *mask)
+{
+	struct rtnl_flower *f;
+
+	if (!(f = rtnl_tc_data_peek(TC_CAST(cls))))
+		return -NLE_INVAL;
+
+	if (!(f->cf_mask & FLOWER_ATTR_IPV4_SRC))
+		return -NLE_MISSING_ATTR;
+
+	if (addr)
+		memcpy(addr, f->cf_ipv4_src, AF_INET);
+
+	*mask = f->cf_ipv4_src_mask;
+
+	return 0;
+}
+
+/**
+ * Set IPv4 destination address for flower classifier
+ * @arg cls		Flower classifier.
+ * @arg addr		IPv4 destination address
+ * @arg mask		mask for IPv4 destination address
+ * @return 0 on success or a negative error code.
+ */
+int rtnl_flower_set_ipv4_dst(struct rtnl_cls *cls, int addr, int mask)
+{
+	struct rtnl_flower *f;
+
+	if (!(f = rtnl_tc_data(TC_CAST(cls))))
+		return -NLE_NOMEM;
+
+	if (addr) {
+		f->cf_ipv4_dst = nl_addr_build(AF_INET,
+					       (unsigned char *)&addr,
+					       sizeof(__be32));
+
+		f->cf_mask |= FLOWER_ATTR_IPV4_DST;
+
+		if (mask) {
+			uint32_t m = 0xFFFFFFFF << (32 - mask);
+			f->cf_ipv4_dst_mask = htonl(m);
+			f->cf_mask |= FLOWER_ATTR_IPV4_DST_MASK;
+		}
+
+		return 0;
+	}
+
+	return -NLE_FAILURE;
+}
+
+/**
+ * Get IPv4 destination address for flower classifier
+ * @arg cls		Flower classifier.
+ * @arg addr		IPv4 destination address
+ * @arg mask		mask for IPv4 destination address
+ * @return 0 on success or a negative error code.
+ */
+int rtnl_flower_get_ipv4_dst(struct rtnl_cls *cls, struct nl_addr *addr,
+			     uint32_t *mask)
+{
+	struct rtnl_flower *f;
+
+	if (!(f = rtnl_tc_data_peek(TC_CAST(cls))))
+		return -NLE_INVAL;
+
+	if (!(f->cf_mask & FLOWER_ATTR_IPV4_DST))
+		return -NLE_MISSING_ATTR;
+
+	if (addr)
+		memcpy(addr, f->cf_ipv4_dst, AF_INET);
+
+	*mask = f->cf_ipv4_dst_mask;
 
 	return 0;
 }
