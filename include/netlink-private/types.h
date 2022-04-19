@@ -294,6 +294,7 @@ struct rtnl_addr
 
 	struct rtnl_addr_cacheinfo a_cacheinfo;
 
+	uint8_t a_proto;
 	char a_label[IFNAMSIZ];
 	uint32_t a_flag_mask;
 	struct rtnl_link *a_link;

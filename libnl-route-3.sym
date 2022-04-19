@@ -1153,6 +1153,8 @@ global:
 
 libnl_3_6 {
 global:
+	rtnl_addr_get_proto;
+	rtnl_addr_set_proto;
 	rtnl_cls_find_by_handle;
 	rtnl_cls_find_by_prio;
 	rtnl_flower_append_action;
