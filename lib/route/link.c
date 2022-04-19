@@ -848,8 +848,10 @@ static void link_dump_line(struct nl_object *obj, struct nl_dump_params *p)
 		fetched_cache = 1;
 	}
 
-	if (link->l_family != AF_UNSPEC)
+	if (link->l_family != AF_UNSPEC && link->l_family != AF_BRIDGE)
 		nl_dump_line(p, "%s ", nl_af2str(link->l_family, buf, sizeof(buf)));
+	if (link->l_family == AF_BRIDGE)
+		nl_dump_line(p, "%u: ", link->l_index);
 
 	nl_dump_line(p, "%s %s ", link->l_name,
 		     nl_llproto2str(link->l_arptype, buf, sizeof(buf)));
@@ -870,7 +872,7 @@ static void link_dump_line(struct nl_object *obj, struct nl_dump_params *p)
 	if (buf[0])
 		nl_dump(p, "<%s> ", buf);
 
-	if (link->ce_mask & LINK_ATTR_LINK) {
+	if ((link->ce_mask & LINK_ATTR_LINK) && link->l_family != AF_BRIDGE) {
 		if (   cache
 		    && !(link->ce_mask & LINK_ATTR_LINK_NETNSID)) {
 			_nl_auto_rtnl_link struct rtnl_link *ll = rtnl_link_get(cache, link->l_link);
