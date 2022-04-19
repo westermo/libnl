@@ -7,6 +7,7 @@
 #define __NETLINK_CLI_LINK_H_
 
 #include <netlink/route/link.h>
+#include <netlink/route/link/bridge.h>
 #include <netlink/cli/utils.h>
 
 #ifdef __cplusplus
