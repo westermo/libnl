@@ -1379,5 +1379,6 @@ struct rtnl_mdb_entry {
 	uint16_t vid;
 	uint16_t proto;
 	uint8_t state;
+	uint32_t ce_mask;
 };
 #endif

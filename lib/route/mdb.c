@@ -13,8 +13,12 @@
 #define MDB_ATTR_IFINDEX         0x000001
 #define MDB_ATTR_ENTRIES         0x000002
 
-static struct rtnl_mdb_entry *rtnl_mdb_entry_alloc(void);
-static void rtnl_mdb_entry_free(struct rtnl_mdb_entry *mdb_entry);
+/* MDB entry attributes for set operations */
+#define MDBE_ATTR_IFINDEX        0x000001
+#define MDBE_ATTR_VID            0x000002
+#define MDBE_ATTR_STATE          0x000004
+#define MDBE_ATTR_ADDR           0x000008
+#define MDBE_ATTR_PROTO          0x000010
 
 static struct nl_cache_ops rtnl_mdb_ops;
 static struct nl_object_ops mdb_obj_ops;
@@ -343,6 +347,15 @@ int rtnl_mdb_alloc_cache_flags(struct nl_sock *sock, struct nl_cache **result,
  * @name Attributes
  * @{
  */
+
+/*
+ * Set ifindex of bridge that owns this mdb
+ */
+void rtnl_mdb_set_ifindex(struct rtnl_mdb *mdb, uint32_t ifindex)
+{
+	mdb->ifindex = ifindex;
+}
+
 uint32_t rtnl_mdb_get_ifindex(struct rtnl_mdb *mdb)
 {
 	return mdb->ifindex;
@@ -364,9 +377,37 @@ void rtnl_mdb_foreach_entry(struct rtnl_mdb *mdb,
 	}
 }
 
+/*
+ * Find an entry in mdb equal to tmpl
+ */
+struct rtnl_mdb_entry *rtnl_mdb_find_entry(struct rtnl_mdb *mdb, struct rtnl_mdb_entry *tmpl)
+{
+	struct rtnl_mdb_entry *entry;
+	struct rtnl_mdb_entry *safe;
+
+	nl_list_for_each_entry_safe(entry, safe, &mdb->mdb_entry_list, mdb_list) {
+		if (mdb_entry_equal(entry, tmpl))
+			return entry;
+	}
+
+	return NULL;
+}
+
+void rtnl_mdb_entry_set_ifindex(struct rtnl_mdb_entry *mdb_entry, uint32_t ifindex)
+{
+	mdb_entry->ifindex = ifindex;
+	mdb_entry->ce_mask |= MDBE_ATTR_IFINDEX;
+}
+
 int rtnl_mdb_entry_get_ifindex(struct rtnl_mdb_entry *mdb_entry)
 {
 	return mdb_entry->ifindex;
+}
+
+void rtnl_mdb_entry_set_vid(struct rtnl_mdb_entry *mdb_entry, uint16_t vid)
+{
+	mdb_entry->vid = vid;
+	mdb_entry->ce_mask |= MDBE_ATTR_VID;
 }
 
 int rtnl_mdb_entry_get_vid(struct rtnl_mdb_entry *mdb_entry)
@@ -374,14 +415,50 @@ int rtnl_mdb_entry_get_vid(struct rtnl_mdb_entry *mdb_entry)
 	return mdb_entry->vid;
 }
 
+/*
+ * State is one of MDB_TEMPORARY or MDB_PERMANENT.  The bridge supports only
+ * temporary for IP groups and permanent for MAC entries.
+ */
+void rtnl_mdb_entry_set_state(struct rtnl_mdb_entry *mdb_entry, int state)
+{
+	mdb_entry->state = state;
+	mdb_entry->ce_mask |= MDBE_ATTR_STATE;
+}
+
 int rtnl_mdb_entry_get_state(struct rtnl_mdb_entry *mdb_entry)
 {
 	return mdb_entry->state;
 }
 
+void rtnl_mdb_entry_set_addr(struct rtnl_mdb_entry *mdb_entry, struct nl_addr *addr)
+{
+	if (mdb_entry->addr)
+		nl_addr_put(mdb_entry->addr);
+	nl_addr_get(addr);
+	mdb_entry->addr = addr;
+	switch (nl_addr_get_family(addr)) {
+	case AF_INET:
+		mdb_entry->proto = ETH_P_IP;
+		break;
+	case AF_INET6:
+		mdb_entry->proto = ETH_P_IPV6;
+		break;
+	default:
+		mdb_entry->proto = 0;
+		break;
+	}
+	mdb_entry->ce_mask |= MDBE_ATTR_ADDR;
+}
+
 struct nl_addr *rtnl_mdb_entry_get_addr(struct rtnl_mdb_entry *mdb_entry)
 {
 	return mdb_entry->addr;
+}
+
+void rtnl_mdb_entry_set_proto(struct rtnl_mdb_entry *mdb_entry, uint16_t proto)
+{
+	mdb_entry->proto = proto;
+	mdb_entry->ce_mask |= MDBE_ATTR_PROTO;
 }
 
 uint16_t rtnl_mdb_entry_get_proto(struct rtnl_mdb_entry *mdb_entry)
@@ -411,7 +488,7 @@ struct rtnl_mdb *rtnl_mdb_alloc(void)
 	return (struct rtnl_mdb *) nl_object_alloc(&mdb_obj_ops);
 }
 
-static struct rtnl_mdb_entry *rtnl_mdb_entry_alloc(void)
+struct rtnl_mdb_entry *rtnl_mdb_entry_alloc(void)
 {
 	struct rtnl_mdb_entry *mdb;
 
@@ -422,14 +499,91 @@ static struct rtnl_mdb_entry *rtnl_mdb_entry_alloc(void)
 	nl_init_list_head(&mdb->mdb_list);
 
 	return mdb;
-
 }
 
-static void rtnl_mdb_entry_free(struct rtnl_mdb_entry *mdb_entry)
+void rtnl_mdb_entry_free(struct rtnl_mdb_entry *mdb_entry)
 {
 	nl_list_del(&mdb_entry->mdb_list);
 	nl_addr_put(mdb_entry->addr);
 	free(mdb_entry);
+}
+
+static int build_mdb_msg(struct rtnl_mdb_entry *mdb_entry, int cmd, int ifindex,
+			 int flags, struct nl_msg **result)
+{
+	struct br_mdb_entry entry = { 0 };
+	struct br_port_msg bpm = { 0 };
+	struct nl_msg *msg;
+	void *addr;
+
+	msg = nlmsg_alloc_simple(cmd, flags);
+	if (!msg)
+		return -NLE_NOMEM;
+
+	bpm.family = AF_BRIDGE;
+	bpm.ifindex = ifindex;
+	if (nlmsg_append(msg, &bpm, sizeof(bpm), NLMSG_ALIGNTO) < 0)
+		goto nla_put_failure;
+
+	entry.ifindex = mdb_entry->ifindex;
+	entry.state   = mdb_entry->state;
+	entry.flags   = 0;
+	entry.vid     = mdb_entry->vid;
+
+	entry.addr.proto = htons(mdb_entry->proto);
+	addr = nl_addr_get_binary_addr(mdb_entry->addr);
+	if (mdb_entry->proto == ETH_P_IP)
+		memcpy(&entry.addr.u.ip4, addr, sizeof(entry.addr.u.ip4));
+	else if (mdb_entry->proto == ETH_P_IPV6)
+		memcpy(&entry.addr.u.ip6, addr, sizeof(entry.addr.u.ip6));
+	else
+		memcpy(entry.addr.u.mac_addr, addr, ETH_ALEN);
+	nla_put(msg, MDBA_MDB, sizeof(entry), &entry);
+
+	*result = msg;
+	return 0;
+
+nla_put_failure:
+	nlmsg_free(msg);
+	return -NLE_MSGSIZE;
+}
+
+/*
+ * Add or delete an MDB entry from the given bridge ifindex.
+ */
+static int rtnl_mdb_build_request(struct rtnl_mdb_entry *mdb_entry, int cmd,
+				  int ifindex, int flags, struct nl_msg **result)
+{
+	return build_mdb_msg(mdb_entry, cmd, ifindex, flags, result);
+}
+
+static int rtnl_mdb_compose(struct nl_sock *sk, struct rtnl_mdb_entry *mdb_entry,
+			    int cmd, int ifindex, int flags)
+{
+        struct nl_msg *msg;
+	int err;
+
+	err = rtnl_mdb_build_request(mdb_entry, cmd, ifindex, flags, &msg);
+	if (err)
+		return err;
+
+	err = nl_send_sync(sk, msg);
+	if (err)
+		return err;
+
+	return 0;
+}
+
+int rtnl_mdb_add(struct nl_sock *sk, struct rtnl_mdb_entry *mdb_entry,
+		 int ifindex, int flags)
+{
+        return rtnl_mdb_compose(sk, mdb_entry, RTM_NEWMDB, ifindex, flags);
+}
+
+int rtnl_mdb_del(struct nl_sock *sk, struct rtnl_mdb_entry *mdb_entry,
+		 int ifindex, int flags)
+{
+        return rtnl_mdb_compose(sk, mdb_entry, RTM_DELMDB, ifindex, flags);
 }
 
 static struct nl_af_group mdb_groups[] = {
