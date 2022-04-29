@@ -3,8 +3,10 @@
  * Copyright (c) 2022 Joachim Wiberg <troglobit@gmail.com>
  */
 
+#include <net/if.h>
 #include <netlink/cli/utils.h>
 #include <netlink/cli/link.h>
+#include <netlink/cli/mdb.h>
 
 #include <linux/if.h>
 #include <linux/netlink.h>
@@ -15,6 +17,8 @@ typedef enum {
 	DELETE,
 	ATTACH,
 	DETACH,
+	MDB_ADD,
+	MDB_DEL,
 	VLAN_ADD,
 	VLAN_DEL,
 } op_t;
@@ -43,16 +47,58 @@ static void show_one(struct nl_object *obj, void *arg)
 	nl_object_dump(OBJ_CAST(link), &dp);
 }
 
-static void nl_cli_bridge_show(struct rtnl_link *master)
+static void dump_one_neigh(struct nl_object *obj, void *arg)
 {
-	struct nl_cache *links;
-	int rc;
+	struct rtnl_neigh *neigh = (struct rtnl_neigh *)obj;
+	struct nl_dump_params dp = {
+		.dp_type = NL_DUMP_LINE,
+		.dp_fd = stdout,
+	};
 
-	rc = rtnl_link_alloc_cache(sk, AF_BRIDGE, &links);
-	if (rc)
+	if (rtnl_neigh_get_family(neigh) != AF_BRIDGE)
 		return;
 
+	nl_object_dump(obj, &dp);
+}
+
+static void dump_one_mdb(struct nl_object *obj, void *arg)
+{
+	struct nl_dump_params dp = {
+		.dp_type = NL_DUMP_LINE,
+		.dp_fd = stdout,
+	};
+
+	nl_object_dump(obj, &dp);
+}
+
+static void nl_cli_bridge_show(struct rtnl_link *master)
+{
+	struct nl_cache *all_links;
+	struct nl_cache *links;
+	struct nl_cache *cache;
+	int err;
+
+	all_links = nl_cli_link_alloc_cache(sk);
+	links = nl_cli_link_alloc_cache_family(sk, AF_BRIDGE);
+
 	nl_cache_foreach(links, show_one, master);
+
+	printf("fdb ==================================================\n");
+	err = rtnl_neigh_alloc_cache_flags(sk, &cache, NL_CACHE_AF_ITER);
+	if (err)
+		nl_cli_fatal(err, "Failed reading fdb");
+	nl_cache_foreach(cache, dump_one_neigh, NULL);
+	nl_cache_free(cache);
+
+	printf("mdb ==================================================\n");
+	err = rtnl_mdb_alloc_cache_flags(sk, &cache, 0);
+	if (err)
+		nl_cli_fatal(err, "Failed reading mdb");
+	nl_cache_foreach(cache, dump_one_mdb, NULL);
+	nl_cache_free(cache);
+
+	nl_cache_free(all_links);
+	nl_cache_free(links);
 }
 
 static void filter_cb(struct nl_object *obj, void *data)
@@ -101,6 +147,9 @@ static int usage(int rc)
 	       " -a, --attach          Attach bridge port(s)\n"
 	       " -d, --detach          Detach bridge port(s)\n"
 	       "\n"
+	       " -m, --mdb-add=ADDR    Add MDB entry ADDR\n"
+	       " -M, --mdb-del=ADDR    Del MDB entry ADDR\n"
+	       "\n"
 	       " -p, --pvid            Set VID as the PVID (default VLAN) for the port\n"
 	       " -u, --untagged        Set port(s) as untagged member(s) of VLAN VID\n"
 	       " -v, --vlan-add=VID    Associate port(s) with VLAN VID, see -p and -u\n"
@@ -115,13 +164,16 @@ int main(int argc, char *argv[])
 	struct rtnl_link *link, *change;
 	struct bridge_vlan_info vinfo;
 	struct nl_cache *links = NULL;
+	struct rtnl_mdb_entry *entry;
+	struct nl_addr *group = NULL;
 	struct rtnl_link *br = NULL;
 	int untagged = 0;
 	char *nm = NULL;
 	op_t op = SHOW;
 	int vlan = -1;
 	int pvid = 0;
-	int i, rc = 0;
+	int err = 0;
+	int i;
 
 	for (;;) {
 		int c;
@@ -132,13 +184,15 @@ int main(int argc, char *argv[])
 			{ "detach",   0, 0, 'd' },
 			{ "debug",    1, 0, 'l' },
 			{ "help",     0, 0, 'h' },
+			{ "mdb-add",  1, 0, 'm' },
+			{ "mdb-del",  1, 0, 'M' },
 			{ "untagged", 0, 0, 'u' },
 			{ "vlan-add", 1, 0, 'v' },
 			{ "vlan-del", 1, 0, 'V' },
 			{ 0, 0, 0, 0 }
 		};
 
-		c = getopt_long(argc, argv, "acdhl:pruv:V:", long_opts, NULL);
+		c = getopt_long(argc, argv, "acdhl:m:M:pruv:V:", long_opts, NULL);
 		if (c == -1)
                         break;
 
@@ -157,6 +211,14 @@ int main(int argc, char *argv[])
 		case 'l':
 			nl_debug = (int)nl_cli_parse_u32(optarg);
 			break;
+		case 'm':
+			op = MDB_ADD;
+			group = nl_cli_addr_parse(optarg, AF_UNSPEC);
+			break;
+		case 'M':
+			op = MDB_DEL;
+			group = nl_cli_addr_parse(optarg, AF_UNSPEC);
+			break;
 		case 'p':
 			pvid = 1;
 			break;
@@ -164,7 +226,8 @@ int main(int argc, char *argv[])
 			untagged = 1;
 			break;
 		case 'v':
-			op = VLAN_ADD;
+			if (op == SHOW)
+				op = VLAN_ADD;
 			vlan = (int)nl_cli_parse_u32(optarg);
 			break;
 		case 'V':
@@ -196,22 +259,22 @@ int main(int argc, char *argv[])
 	case CREATE:
 		br = rtnl_link_bridge_alloc();
 		if (!br)
-			nl_cli_fatal(rc, "Failed creating bridge %s", nm);
+			nl_cli_fatal(err, "Failed creating bridge %s", nm);
 
 		rtnl_link_set_name(br, nm);
 		if (vlan != -1) {
 			rtnl_link_bridge_set_vlan_filtering(br, 1);
 			rtnl_link_bridge_set_vlan_default_pvid(br, vlan);
 		}
-		rc = rtnl_link_add(sk, br, NLM_F_CREATE);
+		err = rtnl_link_add(sk, br, NLM_F_CREATE);
 		rtnl_link_put(br);
 		break;
 
 	case ATTACH:
 	case DETACH:
-		rc = rtnl_link_get_kernel(sk, 0, nm, &br);
-		if (rc)
-			nl_cli_fatal(rc, "Cannot find bridge %s", nm);
+		err = rtnl_link_get_kernel(sk, 0, nm, &br);
+		if (err)
+			nl_cli_fatal(err, "Cannot find bridge %s", nm);
 
 		links = nl_cli_link_alloc_cache(sk);
 		nl_cache_foreach(links, filter_cb, ports);
@@ -233,6 +296,49 @@ int main(int argc, char *argv[])
 		}
 		nl_cache_foreach(links, activate_cb, change);
 		rtnl_link_put(br);
+		break;
+
+	case MDB_ADD:
+	case MDB_DEL:
+		err = rtnl_link_get_kernel(sk, 0, nm, &br);
+		if (err)
+			nl_cli_fatal(err, "Cannot find bridge %s", nm);
+
+		entry = rtnl_mdb_entry_alloc();
+		if (!entry)
+			nl_cli_fatal(1, "Failed allocating MDB entry");
+
+		rtnl_mdb_entry_set_addr(entry, group);
+		rtnl_mdb_entry_set_state(entry, MDB_TEMPORARY);
+		if (vlan != -1)
+			rtnl_mdb_entry_set_vid(entry, vlan);
+
+		links = nl_cli_link_alloc_cache(sk);
+		for (i = 0; i < num_ports; i++) {
+			int nlflags = 0;
+			char buf[256];
+
+			link = rtnl_link_get_by_name(links, ports[i]);
+			if (!link) {
+				fprintf(stderr, "Cannot find %s, skipping\n", ports[i]);
+				continue;
+			}
+
+			nl_addr2str(group, buf, sizeof(buf));
+			rtnl_mdb_entry_set_ifindex(entry, rtnl_link_get_ifindex(link));
+			if (op == MDB_ADD) {
+				nlflags = NLM_F_EXCL | NLM_F_CREATE;
+				err = rtnl_mdb_add(sk, entry, rtnl_link_get_ifindex(br), nlflags);
+				if (err)
+					nl_cli_fatal(err, "Failed adding group %s to vid %d: %s",
+						     buf, vlan, nl_geterror(err));
+			} else {
+				err = rtnl_mdb_del(sk, entry, rtnl_link_get_ifindex(br), nlflags);
+				if (err)
+					nl_cli_fatal(err, "Failed deleting group %s to vid %d: %s",
+						     buf, vlan, nl_geterror(err));
+			}
+		}
 		break;
 
 	case VLAN_ADD:
@@ -274,5 +380,5 @@ int main(int argc, char *argv[])
 
 	nl_socket_free(sk);
 
-	return rc;
+	return err;
 }
