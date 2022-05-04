@@ -371,10 +371,10 @@ void rtnl_mdb_foreach_entry(struct rtnl_mdb *mdb,
                             void *arg)
 {
 	struct rtnl_mdb_entry *entry;
+	struct rtnl_mdb_entry *safe;
 
-	nl_list_for_each_entry(entry, &mdb->mdb_entry_list, mdb_list) {
+	nl_list_for_each_entry_safe(entry, safe, &mdb->mdb_entry_list, mdb_list)
 		cb(entry, arg);
-	}
 }
 
 /*
