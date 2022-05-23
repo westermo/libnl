@@ -124,7 +124,7 @@ static void nat_dump_line(struct rtnl_tc *tc, void *data,
  *
  * @return 0 on success or negative error code in case of an error.
  */
-int rtnl_nat_set_old_addr(struct rtnl_act *act, uint32_t addr)
+int rtnl_nat_set_old_addr(struct rtnl_act *act, in_addr_t addr)
 {
 	struct tc_nat *nat;
 
@@ -136,26 +136,16 @@ int rtnl_nat_set_old_addr(struct rtnl_act *act, uint32_t addr)
 	return NLE_SUCCESS;
 }
 
-int rtnl_nat_set_old_in_addr(struct rtnl_act *act, const struct in_addr *addr)
+int rtnl_nat_get_old_addr(struct rtnl_act *act, in_addr_t *addr)
 {
 	struct tc_nat *nat;
 
 	if (!(nat = (struct tc_nat *) rtnl_tc_data(TC_CAST(act))))
 		return -NLE_NOMEM;
 
-	nat->old_addr = addr->s_addr;
+	*addr = ntohl(nat->old_addr);
 
 	return NLE_SUCCESS;
-}
-
-uint32_t rtnl_nat_get_old_addr(struct rtnl_act *act)
-{
-	struct tc_nat *nat;
-
-	if (!(nat = (struct tc_nat *) rtnl_tc_data(TC_CAST(act))))
-		return -NLE_NOMEM;
-
-	return nat->old_addr;
 }
 
 /**
@@ -165,7 +155,7 @@ uint32_t rtnl_nat_get_old_addr(struct rtnl_act *act)
  *
  * @return 0 on success or negative error code in case of an error.
  */
-int rtnl_nat_set_new_addr(struct rtnl_act *act, uint32_t addr)
+int rtnl_nat_set_new_addr(struct rtnl_act *act, in_addr_t addr)
 {
 	struct tc_nat *nat;
 
@@ -177,26 +167,16 @@ int rtnl_nat_set_new_addr(struct rtnl_act *act, uint32_t addr)
 	return NLE_SUCCESS;
 }
 
-int rtnl_nat_set_new_in_addr(struct rtnl_act *act, const struct in_addr *addr)
+int rtnl_nat_get_new_addr(struct rtnl_act *act, in_addr_t *addr)
 {
 	struct tc_nat *nat;
 
 	if (!(nat = (struct tc_nat *) rtnl_tc_data(TC_CAST(act))))
 		return -NLE_NOMEM;
 
-	nat->new_addr = addr->s_addr;
+	*addr = ntohl(nat->new_addr);
 
 	return NLE_SUCCESS;
-}
-
-uint32_t rtnl_nat_get_new_addr(struct rtnl_act *act)
-{
-	struct tc_nat *nat;
-
-	if (!(nat = (struct tc_nat *) rtnl_tc_data(TC_CAST(act))))
-		return -NLE_NOMEM;
-
-	return nat->new_addr;
 }
 
 /**
@@ -206,27 +186,28 @@ uint32_t rtnl_nat_get_new_addr(struct rtnl_act *act)
  *
  * @return 0 on success or negative error code in case of an error.
  */
-int rtnl_nat_set_mask(struct rtnl_act *act, uint8_t bitmask)
+int rtnl_nat_set_mask(struct rtnl_act *act, in_addr_t bitmask)
 {
 	struct tc_nat *nat;
-	uint32_t mask = 0xFFFFFFFF << (32 - bitmask);
 
 	if (!(nat = (struct tc_nat *) rtnl_tc_data(TC_CAST(act))))
 		return -NLE_NOMEM;
 
-	nat->mask = htonl(mask);
+	nat->mask = htonl(bitmask);
 
 	return NLE_SUCCESS;
 }
 
-uint32_t rtnl_nat_get_mask(struct rtnl_act *act)
+int rtnl_nat_get_mask(struct rtnl_act *act, in_addr_t *bitmask)
 {
 	struct tc_nat *nat;
 
 	if (!(nat = (struct tc_nat *) rtnl_tc_data(TC_CAST(act))))
 		return -NLE_NOMEM;
 
-	return nat->mask;
+	*bitmask = ntohl(nat->mask);
+
+	return NLE_SUCCESS;
 }
 
 /**
@@ -251,14 +232,16 @@ int rtnl_nat_set_flags(struct rtnl_act *act, uint32_t flags)
 	return NLE_SUCCESS;
 }
 
-uint32_t rtnl_nat_get_flags(struct rtnl_act *act)
+int rtnl_nat_get_flags(struct rtnl_act *act, uint32_t *flags)
 {
 	struct tc_nat *nat;
 
 	if (!(nat = (struct tc_nat *) rtnl_tc_data(TC_CAST(act))))
 		return -NLE_NOMEM;
 
-	return nat->flags;
+	*flags = nat->flags;
+
+	return NLE_SUCCESS;
 }
 
 int rtnl_nat_set_action(struct rtnl_act *act, int action)
@@ -272,17 +255,20 @@ int rtnl_nat_set_action(struct rtnl_act *act, int action)
 		return -NLE_INVAL;
 
 	nat->action = action;
-	return 0;
+
+	return NLE_SUCCESS;
 }
 
-int rtnl_nat_get_action(struct rtnl_act *act)
+int rtnl_nat_get_action(struct rtnl_act *act, int *action)
 {
         struct tc_nat *nat;
 
 	if (!(nat = (struct tc_nat *) rtnl_tc_data_peek(TC_CAST(act))))
 	        return -NLE_NOMEM;
 
-	return nat->action;
+	*action = nat->action;
+
+	return NLE_SUCCESS;
 }
 
 /**
