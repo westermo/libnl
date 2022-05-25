@@ -309,6 +309,7 @@ static struct nla_policy br_attrs_policy[IFLA_BRPORT_MAX+1] = {
 	[IFLA_BRPORT_LEARNING]		= { .type = NLA_U8 },
 	[IFLA_BRPORT_LEARNING_SYNC]	= { .type = NLA_U8 },
 	[IFLA_BRPORT_UNICAST_FLOOD]	= { .type = NLA_U8 },
+	[IFLA_BRPORT_MCAST_FLOOD]	= { .type = NLA_U8 },
 };
 
 static void check_flag(struct rtnl_link *link, struct nlattr *attrs[],
@@ -363,6 +364,8 @@ static int bridge_port_parse_protinfo(struct rtnl_link *link, struct nlattr *att
 	check_flag(link, br_attrs, IFLA_BRPORT_FAST_LEAVE, RTNL_BRIDGE_FAST_LEAVE);
 	check_flag(link, br_attrs, IFLA_BRPORT_UNICAST_FLOOD,
 	           RTNL_BRIDGE_UNICAST_FLOOD);
+	check_flag(link, br_attrs, IFLA_BRPORT_MCAST_FLOOD,
+	           RTNL_BRIDGE_MULTICAST_FLOOD);
 	check_flag(link, br_attrs, IFLA_BRPORT_LEARNING, RTNL_BRIDGE_LEARNING);
 	check_flag(link, br_attrs, IFLA_BRPORT_LEARNING_SYNC,
 	           RTNL_BRIDGE_LEARNING_SYNC);
@@ -455,6 +458,10 @@ static int bridge_port_fill_pi(struct rtnl_link *link, struct nl_msg *msg,
 		if (bd->b_flags_mask & RTNL_BRIDGE_UNICAST_FLOOD) {
 			NLA_PUT_U8(msg, IFLA_BRPORT_UNICAST_FLOOD,
 			           bd->b_flags & RTNL_BRIDGE_UNICAST_FLOOD);
+		}
+		if (bd->b_flags_mask & RTNL_BRIDGE_MULTICAST_FLOOD) {
+			NLA_PUT_U8(msg, IFLA_BRPORT_MCAST_FLOOD,
+			           bd->b_flags & RTNL_BRIDGE_MULTICAST_FLOOD);
 		}
 		if (bd->b_flags_mask & RTNL_BRIDGE_LEARNING) {
 			NLA_PUT_U8(msg, IFLA_BRPORT_LEARNING,
@@ -1459,7 +1466,8 @@ static const struct trans_tbl bridge_flags[] = {
 	__ADD(RTNL_BRIDGE_BPDU_GUARD, 	bpdu_guard),
 	__ADD(RTNL_BRIDGE_ROOT_BLOCK,	root_block),
 	__ADD(RTNL_BRIDGE_FAST_LEAVE,	fast_leave),
-	__ADD(RTNL_BRIDGE_UNICAST_FLOOD,	flood),
+	__ADD(RTNL_BRIDGE_UNICAST_FLOOD,	uc_flood),
+	__ADD(RTNL_BRIDGE_MULTICAST_FLOOD,	mc_flood),
 	__ADD(RTNL_BRIDGE_LEARNING,			learning),
 	__ADD(RTNL_BRIDGE_LEARNING_SYNC,	learning_sync),
 };
