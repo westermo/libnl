@@ -170,6 +170,8 @@ extern void			nl_cache_ops_put(struct nl_cache_ops *);
 extern void			nl_cache_ops_set_flags(struct nl_cache_ops *,
 						       unsigned int);
 
+extern struct nl_cache *	nl_cache_alloc_no_hashtable(struct nl_cache_ops *ops);
+
 #ifdef __cplusplus
 }
 #endif

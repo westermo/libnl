@@ -368,4 +368,5 @@ global:
 libnl_3_6 {
 global:
 	rtnl_link_info_ops_get;
+	nl_cache_alloc_no_hashtable;
 } libnl_3_5;
