@@ -74,13 +74,15 @@ struct bridge_data
 /** @cond SKIP */
 #define BRIDGE_ATTR_VLAN_FILTERING	(1 << 0)
 #define BRIDGE_ATTR_DEFAULT_PVID	(1 << 1)
+#define BRIDGE_ATTR_MULTI_BOOLOPT	(1 << 2)
 
 struct bridge_info
 {
-	uint8_t		vlan_filtering;
-	uint16_t	default_pvid;
+	uint8_t			vlan_filtering;
+	uint16_t		default_pvid;
+	struct br_boolopt_multi	bm;
 
-	uint32_t	ce_mask;
+	uint32_t		ce_mask;
 };
 
 /** @endcond */
@@ -193,6 +195,10 @@ static int bridge_put_attrs(struct nl_msg *msg, struct rtnl_link *link)
 
 	if (info->ce_mask & BRIDGE_ATTR_DEFAULT_PVID)
 		NLA_PUT_U16(msg, IFLA_BR_VLAN_DEFAULT_PVID, info->default_pvid);
+	if (info->ce_mask & BRIDGE_ATTR_MULTI_BOOLOPT) {
+		if (nla_put(msg, IFLA_BR_MULTI_BOOLOPT, sizeof(info->bm), &info->bm) < 0)
+			goto nla_put_failure;
+	}
 
 	nla_nest_end(msg, data);
 
@@ -1033,6 +1039,33 @@ int rtnl_link_bridge_set_vlan_default_pvid(struct rtnl_link *link, uint16_t pvid
 
 	bi->default_pvid = pvid;
 	bi->ce_mask |= BRIDGE_ATTR_DEFAULT_PVID;
+
+	return 0;
+}
+
+/**
+ * Set bridge boolopt
+ * @arg link		Link object of type bridge
+ * @arg opt		Bool option to set or clear
+ * @arg set             Set (1) or clear (0)
+ *
+ * @return 0 on success or a negative error code.
+ * @retval -NLE_OPNOTSUPP Link is not a bridge
+ */
+int rtnl_link_bridge_set_boolopt(struct rtnl_link *link, enum br_boolopt_id opt, int set)
+{
+	struct bridge_info *bi = link->l_info;
+	uint32_t bit = 1 << opt;
+
+	IS_BRIDGE_ASSERT(link);
+
+	bi->bm.optmask |= 1 << opt;
+	if (set)
+		bi->bm.optval |= bit;
+	else
+		bi->bm.optval &= ~bit;
+
+	bi->ce_mask |= BRIDGE_ATTR_MULTI_BOOLOPT;
 
 	return 0;
 }
