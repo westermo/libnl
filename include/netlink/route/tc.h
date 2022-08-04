@@ -94,6 +94,9 @@ extern uint64_t		rtnl_tc_get_stat(struct rtnl_tc *, enum rtnl_tc_stat);
 extern char *		rtnl_tc_stat2str(enum rtnl_tc_stat, char *, size_t);
 extern int		rtnl_tc_str2stat(const char *);
 
+extern void		rtnl_tc_set_ingress_block(struct rtnl_tc *, uint32_t);
+extern void		rtnl_tc_set_egress_block(struct rtnl_tc *, uint32_t);
+
 extern int		rtnl_tc_calc_txtime(int, int);
 extern int		rtnl_tc_calc_bufsize(int, int);
 extern int		rtnl_tc_calc_cell_log(int);

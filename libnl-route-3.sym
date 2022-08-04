@@ -1320,4 +1320,6 @@ global:
 	rtnl_flower_set_ipv4_dst;
 	rtnl_flower_get_ipv4_dst;
 	rtnl_link_bridge_set_boolopt;
+	rtnl_tc_set_ingress_block;
+	rtnl_tc_set_egress_block;
 } libnl_3_6;
