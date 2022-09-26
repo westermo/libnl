@@ -1322,4 +1322,6 @@ global:
 	rtnl_link_bridge_set_boolopt;
 	rtnl_tc_set_ingress_block;
 	rtnl_tc_set_egress_block;
+	rtnl_flower_set_ip_proto;
+	rtnl_flower_get_ip_proto;
 } libnl_3_6;
