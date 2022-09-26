@@ -124,16 +124,8 @@ int rtnl_mirred_set_action(struct rtnl_act *act, int action)
 	if (action > TCA_INGRESS_MIRROR || action < TCA_EGRESS_REDIR)
 		return -NLE_INVAL;
 
-	switch (action) {
-	case TCA_EGRESS_MIRROR:
-	case TCA_EGRESS_REDIR:
-		u->m_parm.eaction = action;
-		break;
-	case TCA_INGRESS_REDIR:
-	case TCA_INGRESS_MIRROR:
-	default:
-		return NLE_OPNOTSUPP;
-	}
+	u->m_parm.eaction = action;
+
 	return 0;
 }
 
@@ -176,16 +168,8 @@ int rtnl_mirred_set_policy(struct rtnl_act *act, int policy)
 	if (policy < TC_ACT_UNSPEC)
 		return -NLE_INVAL;
 
-	switch (u->m_parm.eaction) {
-	case TCA_EGRESS_MIRROR:
-	case TCA_EGRESS_REDIR:
-		u->m_parm.action = policy;
-		break;
-	case TCA_INGRESS_REDIR:
-	case TCA_INGRESS_MIRROR:
-	default:
-		return NLE_OPNOTSUPP;
-	}
+	u->m_parm.action = policy;
+
 	return 0;
 }
 
