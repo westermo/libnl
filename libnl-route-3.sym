@@ -1324,4 +1324,6 @@ global:
 	rtnl_tc_set_egress_block;
 	rtnl_flower_set_ip_proto;
 	rtnl_flower_get_ip_proto;
+	rtnl_flower_get_vlan_ethtype;
+	rtnl_flower_get_flags;
 } libnl_3_6;
