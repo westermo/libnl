@@ -1324,4 +1324,17 @@ global:
 	rtnl_police_get_overhead;
 	rtnl_police_set_linklayer;
 	rtnl_police_get_linklayer;
+	rtnl_link_hsr_alloc;
+	rtnl_link_hsr_add;
+	rtnl_link_is_hsr;
+	rtnl_hsr_get_slave1;
+	rtnl_hsr_set_slave1;
+	rtnl_hsr_get_slave2;
+	rtnl_hsr_set_slave2;
+	rtnl_hsr_get_supervision;
+	rtnl_hsr_set_supervision;
+	rtnl_hsr_get_version;
+	rtnl_hsr_set_version;
+	rtnl_hsr_get_proto;
+	rtnl_hsr_set_proto;
 } libnl_3_6;
