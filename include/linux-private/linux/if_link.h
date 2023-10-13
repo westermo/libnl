@@ -1129,6 +1129,28 @@ enum {
 
 #define IFLA_HSR_MAX (__IFLA_HSR_MAX - 1)
 
+/* INTERLINK for HSR/PRP section */
+
+enum {
+	IFLA_INTERLINK_UNSPEC,
+	IFLA_INTERLINK_DEV,
+	IFLA_INTERLINK_MULTICAST_SPEC,	/* Last byte of supervision addr */
+	IFLA_INTERLINK_SUPERVISION_ADDR,/* Supervision frame multicast addr */
+	IFLA_INTERLINK_SEQ_NR,
+	IFLA_INTERLINK_VERSION,		/* HSR version */
+	IFLA_INTERLINK_PROTOCOL,	/* Indicate different protocol than
+					 * HSR. For example PRP.
+					 */
+	IFLA_INTERLINK_LAN_ID,
+	IFLA_INTERLINK_NET_ID,
+	__IFLA_INTERLINK_MAX,
+};
+
+#define IFLA_INTERLINK_MAX (__IFLA_INTERLINK_MAX - 1)
+
+#define PRP_LAN_ID_A 0
+#define PRP_LAN_ID_B 1
+
 /* STATS section */
 
 struct if_stats_msg {
