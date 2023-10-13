@@ -176,6 +176,7 @@ libnlinclude_netlink_route_link_HEADERS = \
 	include/netlink/route/link/vxlan.h \
 	include/netlink/route/link/xfrmi.h \
 	include/netlink/route/link/hsr.h \
+	include/netlink/route/link/interlink.h \
 	$(NULL)
 libnlinclude_netlink_route_qdiscdir = $(libnlincludedir)/netlink/route/qdisc
 libnlinclude_netlink_route_qdisc_HEADERS = \
@@ -434,6 +435,7 @@ lib_libnl_route_3_la_SOURCES = \
 	lib/route/link/vxlan.c \
 	lib/route/link/xfrmi.c \
 	lib/route/link/hsr.c \
+	lib/route/link/interlink.c \
 	lib/route/mdb.c \
 	lib/route/neigh.c \
 	lib/route/neightbl.c \
