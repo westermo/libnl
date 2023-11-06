@@ -1127,6 +1127,7 @@ enum {
 	IFLA_HSR_PROTOCOL,		/* Indicate different protocol than
 					 * HSR. For example PRP.
 					 */
+	IFLA_HSR_EFT,		        /* Entry Forget Time */
 	__IFLA_HSR_MAX,
 };
 
