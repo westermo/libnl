@@ -32,6 +32,9 @@ extern "C" {
 	extern int rtnl_hsr_get_proto(struct rtnl_link *link, uint8_t *proto);
 	extern int rtnl_hsr_set_proto(struct rtnl_link *link, uint8_t proto);
 
+	extern int rtnl_hsr_get_eft(struct rtnl_link *link, uint32_t *eft);
+	extern int rtnl_hsr_set_eft(struct rtnl_link *link, uint32_t eft);
+
 #ifdef __cplusplus
 }
 #endif

@@ -1339,6 +1339,8 @@ global:
 	rtnl_hsr_set_version;
 	rtnl_hsr_get_proto;
 	rtnl_hsr_set_proto;
+	rtnl_hsr_get_eft;
+	rtnl_hsr_set_eft;
 	rtnl_link_interlink_alloc;
 	rtnl_link_interlink_add;
 	rtnl_link_is_interlink;
