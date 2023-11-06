@@ -33,6 +33,7 @@
 #define HSR_ATTR_PROTOCOL         (1 << 4)
 #define HSR_ATTR_SUPERVISION_ADDR (1 << 5)
 #define HSR_ATTR_SEQ_NR           (1 << 6)
+#define HSR_ATTR_EFT              (1 << 7)
 
 struct hsr_info {
 	uint32_t hi_slave1;
@@ -42,6 +43,7 @@ struct hsr_info {
 	uint8_t  hi_protocol;
 	unsigned char *hi_sv_addr;
 	uint16_t hi_seq_nr;
+	uint32_t hi_eft;
 	uint32_t hi_mask;
 };
 
@@ -53,6 +55,7 @@ static struct nla_policy hsr_policy[IFLA_HSR_MAX+1] = {
 	[IFLA_HSR_SUPERVISION_ADDR]	= { .minlen = ETH_ALEN },
 	[IFLA_HSR_SEQ_NR]		= { .type = NLA_U16 },
 	[IFLA_HSR_PROTOCOL]		= { .type = NLA_U8 },
+	[IFLA_HSR_EFT]		        = { .type = NLA_U32 },
 };
 
 
@@ -145,6 +148,11 @@ static int hsr_parse(struct rtnl_link *link, struct nlattr *data,
 		info->hi_mask |= HSR_ATTR_SEQ_NR;
 	}
 
+	if (tb[IFLA_HSR_EFT]) {
+		info->hi_eft = nla_get_u32(tb[IFLA_HSR_EFT]);
+		info->hi_mask |= HSR_ATTR_EFT;
+	}
+
  out:
 	return err;
 }
@@ -171,6 +179,9 @@ static int hsr_put_attrs(struct nl_msg *msg, struct rtnl_link *link)
 
 	if (info->hi_mask & HSR_ATTR_PROTOCOL)
 		NLA_PUT_U8(msg, IFLA_HSR_PROTOCOL, info->hi_protocol);
+
+	if (info->hi_mask & HSR_ATTR_EFT)
+		NLA_PUT_U32(msg, IFLA_HSR_EFT, info->hi_eft);
 
 	nla_nest_end(msg, data);
 
@@ -422,6 +433,43 @@ int rtnl_hsr_set_proto(struct rtnl_link *link, uint8_t proto)
 
 	info->hi_protocol = proto;
 	info->hi_mask |= HSR_ATTR_PROTOCOL;
+
+	return 0;
+}
+
+/**
+ * Get Entry Forget Time
+ * @arg link		HSR link
+ * @arg eft		entry forget time
+ *
+ * @return 0 on success or a negative error code otherwise.
+ */
+int rtnl_hsr_get_eft(struct rtnl_link *link, uint32_t *eft)
+{
+	struct hsr_info *info = link->l_info;
+
+	IS_HSR_LINK_ASSERT(link);
+
+	*eft = info->hi_eft;
+
+	return 0;
+}
+
+/**
+ * Set Entry Forget Time for an HSR link
+ * @arg link        HSR link
+ * @arg eft         Entry Forget Time (0 - 7)
+ *
+ * @return 0 on success or negative error code in case of an error
+ */
+int rtnl_hsr_set_eft(struct rtnl_link *link, uint32_t eft)
+{
+	struct hsr_info *info = link->l_info;
+
+	IS_HSR_LINK_ASSERT(link);
+
+	info->hi_eft = eft;
+	info->hi_mask |= HSR_ATTR_EFT;
 
 	return 0;
 }
