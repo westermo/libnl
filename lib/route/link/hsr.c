@@ -34,6 +34,7 @@
 #define HSR_ATTR_SUPERVISION_ADDR (1 << 5)
 #define HSR_ATTR_SEQ_NR           (1 << 6)
 #define HSR_ATTR_EFT              (1 << 7)
+#define HSR_ATTR_HSR_OP_MODE      (1 << 8)
 
 struct hsr_info {
 	uint32_t hi_slave1;
@@ -44,6 +45,7 @@ struct hsr_info {
 	unsigned char *hi_sv_addr;
 	uint16_t hi_seq_nr;
 	uint32_t hi_eft;
+	uint32_t hi_hsr_mode;
 	uint32_t hi_mask;
 };
 
@@ -56,6 +58,7 @@ static struct nla_policy hsr_policy[IFLA_HSR_MAX+1] = {
 	[IFLA_HSR_SEQ_NR]		= { .type = NLA_U16 },
 	[IFLA_HSR_PROTOCOL]		= { .type = NLA_U8 },
 	[IFLA_HSR_EFT]		        = { .type = NLA_U32 },
+	[IFLA_HSR_MODE]		        = { .type = NLA_U32 },
 };
 
 
@@ -153,6 +156,11 @@ static int hsr_parse(struct rtnl_link *link, struct nlattr *data,
 		info->hi_mask |= HSR_ATTR_EFT;
 	}
 
+	if (tb[IFLA_HSR_MODE]) {
+		info->hi_hsr_mode = nla_get_u32(tb[IFLA_HSR_MODE]);
+		info->hi_mask |= HSR_ATTR_HSR_OP_MODE;
+	}
+
  out:
 	return err;
 }
@@ -182,6 +190,9 @@ static int hsr_put_attrs(struct nl_msg *msg, struct rtnl_link *link)
 
 	if (info->hi_mask & HSR_ATTR_EFT)
 		NLA_PUT_U32(msg, IFLA_HSR_EFT, info->hi_eft);
+
+	if (info->hi_mask & HSR_ATTR_HSR_OP_MODE)
+		NLA_PUT_U32(msg, IFLA_HSR_MODE, info->hi_hsr_mode);
 
 	nla_nest_end(msg, data);
 
@@ -474,6 +485,42 @@ int rtnl_hsr_set_eft(struct rtnl_link *link, uint32_t eft)
 	return 0;
 }
 
+/**
+ * Get Operational Mode for HSR link
+ * @arg link		HSR link
+ * @arg mode		operational mode
+ *
+ * @return 0 on success or a negative error code otherwise.
+ */
+int rtnl_hsr_get_op_mode(struct rtnl_link *link, uint32_t *mode)
+{
+	struct hsr_info *info = link->l_info;
+
+	IS_HSR_LINK_ASSERT(link);
+
+	*mode = info->hi_hsr_mode;
+
+	return 0;
+}
+
+/**
+ * Set Operational mode for an HSR link
+ * @arg link        HSR link
+ * @arg mode        Opmode HSR_OP_MODE_H, _N, _T, _U (0 - (H), 1 - (N), 2 - (T), 3 - (U))
+ *
+ * @return 0 on success or negative error code in case of an error
+ */
+int rtnl_hsr_set_op_mode(struct rtnl_link *link, uint32_t mode)
+{
+	struct hsr_info *info = link->l_info;
+
+	IS_HSR_LINK_ASSERT(link);
+
+	info->hi_hsr_mode = mode;
+	info->hi_mask |= HSR_ATTR_HSR_OP_MODE;
+
+	return 0;
+}
 
 /**
  * Allocate link object of type HSR

@@ -35,6 +35,9 @@ extern "C" {
 	extern int rtnl_hsr_get_eft(struct rtnl_link *link, uint32_t *eft);
 	extern int rtnl_hsr_set_eft(struct rtnl_link *link, uint32_t eft);
 
+	extern int rtnl_hsr_get_op_mode(struct rtnl_link *link, uint32_t *mode);
+	extern int rtnl_hsr_set_op_mode(struct rtnl_link *link, uint32_t mode);
+
 #ifdef __cplusplus
 }
 #endif

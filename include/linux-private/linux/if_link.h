@@ -1116,6 +1116,13 @@ enum {
 };
 
 enum {
+	HSR_OP_MODE_H,
+	HSR_OP_MODE_N,
+	HSR_OP_MODE_T,
+	HSR_OP_MODE_U,
+};
+
+enum {
 	IFLA_HSR_UNSPEC,
 	IFLA_HSR_SLAVE1,
 	IFLA_HSR_SLAVE2,
@@ -1127,6 +1134,7 @@ enum {
 					 * HSR. For example PRP.
 					 */
 	IFLA_HSR_EFT,		        /* Entry Forget Time */
+	IFLA_HSR_MODE,		        /* HSR Mode (H, N, T, U) */
 	__IFLA_HSR_MAX,
 };
 
