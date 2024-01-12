@@ -71,6 +71,172 @@ struct bridge_data
 	struct rtnl_link_bridge_vlan vlan_info;
 };
 
+/** @cond SKIP */
+#define BRIDGE_ATTR_VLAN_FILTERING	(1 << 0)
+#define BRIDGE_ATTR_DEFAULT_PVID	(1 << 1)
+
+struct bridge_info
+{
+	uint8_t		vlan_filtering;
+	uint16_t	default_pvid;
+
+	uint32_t	ce_mask;
+};
+
+/** @endcond */
+
+static struct nla_policy bridge_policy[IFLA_BR_MAX+1] = {
+	[IFLA_BR_VLAN_FILTERING]    = { .type = NLA_U8},
+	[IFLA_BR_VLAN_DEFAULT_PVID] = { .type = NLA_U16},
+};
+
+static int bridge_alloc(struct rtnl_link *link)
+{
+	if (!link->l_info) {
+		link->l_info = malloc(sizeof(struct bridge_info));
+		if (!link->l_info)
+			return -NLE_NOMEM;
+	}
+
+	memset(link->l_info, 0, sizeof(struct bridge_info));
+
+	return 0;
+}
+
+static int bridge_clone(struct rtnl_link *dst, struct rtnl_link *src)
+{
+	struct bridge_info *copy, *info = src->l_info;
+	int err;
+
+	dst->l_info = NULL;
+	if ((err = rtnl_link_set_type(dst, "bridge")) < 0)
+		return err;
+	copy = dst->l_info;
+
+	if (!info || !copy)
+		return -NLE_NOMEM;
+
+	memcpy(copy, info, sizeof(struct bridge_info));
+
+	return 0;
+}
+
+static void bridge_free(struct rtnl_link *link)
+{
+	free(link->l_info);
+	link->l_info = NULL;
+}
+
+static int bridge_parse(struct rtnl_link *link, struct nlattr *data,
+			struct nlattr *xstats)
+{
+	struct nlattr *tb[IFLA_BR_MAX+1];
+	struct bridge_info *info;
+	int err;
+
+	NL_DBG(3, "Parsing bridge info\n");
+
+	if ((err = nla_parse_nested(tb, IFLA_BR_MAX, data, bridge_policy)) < 0)
+		goto errout;
+
+	if ((err = bridge_alloc(link)) < 0)
+		goto errout;
+
+	info = link->l_info;
+
+	if (tb[IFLA_BR_VLAN_FILTERING]) {
+		info->vlan_filtering = nla_get_u8(tb[IFLA_BR_VLAN_FILTERING]);
+		info->ce_mask |= BRIDGE_ATTR_VLAN_FILTERING;
+	}
+
+	if (tb[IFLA_BR_VLAN_DEFAULT_PVID]) {
+		info->default_pvid = nla_get_u8(tb[IFLA_BR_VLAN_DEFAULT_PVID]);
+		info->ce_mask |= BRIDGE_ATTR_DEFAULT_PVID;
+	}
+
+	err = 0;
+errout:
+	return err;
+}
+
+static int bridge_compare(struct rtnl_link *link_a, struct rtnl_link *link_b,
+			  int flags)
+{
+	struct bridge_info *a = link_a->l_info;
+	struct bridge_info *b = link_b->l_info;
+	uint32_t attrs = flags & LOOSE_COMPARISON ? b->ce_mask : ~0;
+	int diff = 0;
+
+#define BRIDGE_DIFF(ATTR, EXPR) ATTR_DIFF(attrs, BRIDGE_ATTR_##ATTR, a, b, EXPR)
+
+	if (a->ce_mask & BRIDGE_ATTR_VLAN_FILTERING && b->ce_mask & BRIDGE_ATTR_VLAN_FILTERING)
+		diff |= BRIDGE_DIFF(VLAN_FILTERING, a->vlan_filtering != b->vlan_filtering);
+
+	if (a->ce_mask & BRIDGE_ATTR_DEFAULT_PVID && b->ce_mask & BRIDGE_ATTR_DEFAULT_PVID)
+		diff |= BRIDGE_DIFF(DEFAULT_PVID, a->default_pvid != b->default_pvid);
+
+#undef BRIDGE_DIFF
+
+	return diff;
+}
+
+static int bridge_put_attrs(struct nl_msg *msg, struct rtnl_link *link)
+{
+	struct bridge_info *info = link->l_info;
+	struct nlattr *data;
+
+	if (!(data = nla_nest_start(msg, IFLA_INFO_DATA)))
+		return -NLE_MSGSIZE;
+
+	if (info->ce_mask & BRIDGE_ATTR_VLAN_FILTERING)
+		NLA_PUT_U8(msg, IFLA_BR_VLAN_FILTERING, info->vlan_filtering);
+
+	if (info->ce_mask & BRIDGE_ATTR_DEFAULT_PVID)
+		NLA_PUT_U16(msg, IFLA_BR_VLAN_DEFAULT_PVID, info->default_pvid);
+
+	nla_nest_end(msg, data);
+
+	return 0;
+
+nla_put_failure:
+	return -NLE_MSGSIZE;
+}
+
+static struct rtnl_link_info_ops bridge_info_ops = {
+	.io_name		= "bridge",
+	.io_alloc		= bridge_alloc,
+	.io_clone		= bridge_clone,
+	.io_free		= bridge_free,
+	.io_parse		= bridge_parse,
+	.io_compare		= bridge_compare,
+	.io_put_attrs		= bridge_put_attrs,
+#if 0
+	.io_dump = {
+		[NL_DUMP_LINE]  = bridge_dump_line,
+		[NL_DUMP_DETAILS] = bridge_dump_details,
+	},
+#endif
+};
+
+static void __init bridge_init(void)
+{
+	rtnl_link_register_info(&bridge_info_ops);
+}
+
+static void __exit bridge_exit(void)
+{
+	rtnl_link_unregister_info(&bridge_info_ops);
+}
+
+/** @cond SKIP */
+#define IS_BRIDGE_ASSERT(link) \
+	if ((link)->l_info_ops != &bridge_info_ops) { \
+		APPBUG("Link is not a bridge.  Set type \"bridge\" first."); \
+		return -NLE_OPNOTSUPP; \
+	}
+/** @endcond */
+
+
 static void set_bit(unsigned nr, uint32_t *addr)
 {
 	if (nr < RTNL_LINK_BRIDGE_VLAN_BITMAP_MAX)
@@ -653,15 +819,16 @@ int rtnl_link_bridge_add(struct nl_sock *sk, const char *name)
 }
 
 /**
- * Check if a link is a bridge
+ * Check if a link is a bridge port, or the bridge itself
  * @arg link		Link object
  *
  * @return 1 if the link is a bridge, 0 otherwise.
  */
 int rtnl_link_is_bridge(struct rtnl_link *link)
 {
-	return link->l_family == AF_BRIDGE &&
-	       link->l_af_ops == &bridge_port_ops;
+	return   link->l_family   == AF_BRIDGE &&
+		(link->l_info_ops == &bridge_info_ops ||
+		 link->l_af_ops   == &bridge_port_ops);
 }
 
 /**
@@ -822,6 +989,50 @@ int rtnl_link_bridge_get_cost(struct rtnl_link *link, uint32_t *cost)
 		return -NLE_INVAL;
 
 	*cost = bd->b_cost;
+
+	return 0;
+}
+
+/**
+ * Set bridge VLAN filtering mode
+ * @arg link		Link object of type bridge
+ * @arg onoff		Enable or disable VLAN filtering in bridge
+ *
+ * @return 0 on success or a negative error code.
+ * @retval -NLE_OPNOTSUPP Link is not a bridge
+ */
+int rtnl_link_bridge_set_vlan_filtering(struct rtnl_link *link, uint8_t onoff)
+{
+	struct bridge_info *bi = link->l_info;
+
+	IS_BRIDGE_ASSERT(link);
+
+	bi->vlan_filtering = !!onoff;
+	bi->ce_mask |= BRIDGE_ATTR_VLAN_FILTERING;
+
+	return 0;
+}
+
+/**
+ * Set bridge default VLAN assignment for new ports
+ * @arg link		Link object of type bridge
+ * @arg pvid		Default VLAN to assign to new ports, or zero
+ *
+ * Seting @arg pvid to zero (0) disables automatic VLAN assignment for
+ * new bridge links.  The kernel default is '1', i.e., all new bridge
+ * ports are assigned to VLAN 1.
+ *
+ * @return 0 on success or a negative error code.
+ * @retval -NLE_OPNOTSUPP Link is not a bridge
+ */
+int rtnl_link_bridge_set_vlan_default_pvid(struct rtnl_link *link, uint16_t pvid)
+{
+	struct bridge_info *bi = link->l_info;
+
+	IS_BRIDGE_ASSERT(link);
+
+	bi->default_pvid = pvid;
+	bi->ce_mask |= BRIDGE_ATTR_DEFAULT_PVID;
 
 	return 0;
 }
