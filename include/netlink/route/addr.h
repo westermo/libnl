@@ -39,6 +39,9 @@ extern int	rtnl_addr_delete(struct nl_sock *,
 extern char *	rtnl_addr_flags2str(int, char *, size_t);
 extern int	rtnl_addr_str2flags(const char *);
 
+extern int	rtnl_addr_set_proto(struct rtnl_addr *, uint8_t);
+extern uint8_t	rtnl_addr_get_proto(struct rtnl_addr *);
+
 extern int	rtnl_addr_set_label(struct rtnl_addr *, const char *);
 extern char *	rtnl_addr_get_label(struct rtnl_addr *);
 
