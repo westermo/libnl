@@ -502,6 +502,27 @@ int rtnl_flower_set_vlan_ethtype(struct rtnl_cls *cls, uint16_t ethtype)
 }
 
 /**
+ * Get vlan ethtype for flower classifier
+ * @arg cls		Flower classifier.
+ * @arg vet		vlan ethtype
+ * @return 0 on success or a negative error code.
+*/
+int rtnl_flower_get_vlan_ethtype(struct rtnl_cls *cls, uint16_t *vet)
+{
+	struct rtnl_flower *f;
+
+	if (!(f = rtnl_tc_data_peek(TC_CAST(cls))))
+		return -NLE_INVAL;
+
+	if (!(f->cf_mask & FLOWER_ATTR_VLAN_ETH_TYPE))
+		return -NLE_MISSING_ATTR;
+
+	*vet = ntohs(f->cf_vlan_ethtype);
+
+	return 0;
+}
+
+/**
  * Set destination mac address for flower classifier
  * @arg cls		Flower classifier.
  * @arg mac		destination mac address
@@ -919,6 +940,27 @@ int rtnl_flower_set_flags(struct rtnl_cls *cls, int flags)
 
 	f->cf_flags = flags;
 	f->cf_mask |= FLOWER_ATTR_FLAGS;
+
+	return 0;
+}
+
+/**
+ * Get flags for flower classifier
+ * @arg cls		Flower classifier.
+ * @arg flags		flags
+ * @return 0 on success or a negative error code.
+*/
+int rtnl_flower_get_flags(struct rtnl_cls *cls, int *flags)
+{
+	struct rtnl_flower *f;
+
+	if (!(f = rtnl_tc_data_peek(TC_CAST(cls))))
+		return -NLE_INVAL;
+
+	if (!(f->cf_mask & FLOWER_ATTR_FLAGS))
+		return -NLE_MISSING_ATTR;
+
+	*flags = f->cf_flags;
 
 	return 0;
 }
