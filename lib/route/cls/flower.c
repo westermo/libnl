@@ -672,11 +672,11 @@ int rtnl_flower_set_ipv4_src(struct rtnl_cls *cls, in_addr_t addr,
 		return -NLE_NOMEM;
 
 	if (addr) {
-		f->cf_ipv4_src = addr;
+		f->cf_ipv4_src = htonl(addr);
 		f->cf_mask |= FLOWER_ATTR_IPV4_SRC;
 
 		if (mask) {
-			f->cf_ipv4_src_mask = mask;
+			f->cf_ipv4_src_mask = htonl(mask);
 			f->cf_mask |= FLOWER_ATTR_IPV4_SRC_MASK;
 		}
 
@@ -705,11 +705,11 @@ int rtnl_flower_get_ipv4_src(struct rtnl_cls *cls, in_addr_t *out_addr,
 		return -NLE_MISSING_ATTR;
 
 	if (out_addr)
-		*out_addr = f->cf_ipv4_src;
+		*out_addr = ntohl(f->cf_ipv4_src);
 
 	if (out_mask) {
 		if (f->cf_mask & FLOWER_ATTR_IPV4_SRC_MASK)
-			*out_mask = f->cf_ipv4_src_mask;
+			*out_mask = ntohl(f->cf_ipv4_src_mask);
 		else
 			*out_mask = 0xffffffff;
 	}
@@ -733,11 +733,11 @@ int rtnl_flower_set_ipv4_dst(struct rtnl_cls *cls, in_addr_t addr,
 		return -NLE_NOMEM;
 
 	if (addr) {
-		f->cf_ipv4_dst = addr;
+		f->cf_ipv4_dst = htonl(addr);
 		f->cf_mask |= FLOWER_ATTR_IPV4_DST;
 
 		if (mask) {
-			f->cf_ipv4_dst_mask = mask;
+			f->cf_ipv4_dst_mask = htonl(mask);
 			f->cf_mask |= FLOWER_ATTR_IPV4_DST_MASK;
 		}
 
@@ -766,11 +766,11 @@ int rtnl_flower_get_ipv4_dst(struct rtnl_cls *cls, in_addr_t *out_addr,
 		return -NLE_MISSING_ATTR;
 
 	if (out_addr)
-		*out_addr = f->cf_ipv4_dst;
+		*out_addr = ntohl(f->cf_ipv4_dst);
 
 	if (out_mask) {
 		if (f->cf_mask & FLOWER_ATTR_IPV4_DST_MASK)
-			*out_mask = f->cf_ipv4_dst_mask;
+			*out_mask = ntohl(f->cf_ipv4_dst_mask);
 		else
 			*out_mask = 0xffffffff;
 	}
