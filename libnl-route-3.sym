@@ -883,6 +883,7 @@ global:
 	rtnl_link_ipvlan_set_mode;
 	rtnl_link_ipvlan_get_mode;
 	rtnl_link_set_link_netnsid;
+	rtnl_link_delete_af;
 } libnl_3_2_26;
 
 libnl_3_2_28 {
