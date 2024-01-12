@@ -423,6 +423,12 @@ static int bridge_port_parse_af_full(struct rtnl_link *link, struct nlattr *attr
 			if (vinfo->flags & BRIDGE_VLAN_INFO_UNTAGGED)
 				set_bit(vid_range_start, bd->vlan_info.untagged_bitmap);
 
+			if (vinfo->flags & BRIDGE_VLAN_INFO_POLICY_FORCE)
+				set_bit(vid_range_start, bd->vlan_info.force_bitmap);
+
+			if (vinfo->flags & BRIDGE_VLAN_INFO_POLICY_NEST)
+				set_bit(vid_range_start, bd->vlan_info.nest_bitmap);
+
 			set_bit(vid_range_start, bd->vlan_info.vlan_bitmap);
 			bd->ce_mask |= BRIDGE_ATTR_PORT_VLAN;
 		}
@@ -579,6 +585,16 @@ static void __parse_vlan(struct rtnl_link_bridge_vlan *bv, int vid, int flags)
 
 	if (flags & BRIDGE_VLAN_INFO_UNTAGGED)
 		vlan_field_set(bv->untagged_bitmap, vid);
+
+	if (flags & BRIDGE_VLAN_INFO_POLICY_FORCE)
+		vlan_field_set(bv->force_bitmap, vid);
+	else
+		vlan_field_clear(bv->force_bitmap, vid);
+
+	if (flags & BRIDGE_VLAN_INFO_POLICY_NEST)
+		vlan_field_set(bv->nest_bitmap, vid);
+	else
+		vlan_field_clear(bv->nest_bitmap, vid);
 }
 
 static int __parse_vlans(struct nlattr *af_spec, struct bridge_data *bd)
@@ -658,6 +674,12 @@ static int __fill_vlan(struct rtnl_link_bridge_vlan *bv, struct nl_msg *msg,
 
 	if (vlan_field_get(bv->untagged_bitmap, vid))
 		vlan.flags |= BRIDGE_VLAN_INFO_UNTAGGED;
+
+	if (vlan_field_get(bv->nest_bitmap, vid))
+		vlan.flags |= BRIDGE_VLAN_INFO_POLICY_NEST;
+	
+	if (vlan_field_get(bv->force_bitmap, vid))
+		vlan.flags |= BRIDGE_VLAN_INFO_POLICY_FORCE;
 
 	return nla_put(msg, IFLA_BRIDGE_VLAN_INFO, sizeof(vlan), &vlan);
 }
@@ -1095,6 +1117,9 @@ int rtnl_link_bridge_vlan_flush(struct rtnl_link *link)
 	vlan_field_flush(bd->vlan_info.vlan_bitmap);
 	vlan_field_flush(bd->vlan_info.untagged_bitmap);
 
+	vlan_field_flush(bd->vlan_info.nest_bitmap);
+	vlan_field_flush(bd->vlan_info.force_bitmap);
+
 	bd->vlan_info.pvid = 0;
 	bd->ce_mask |= BRIDGE_ATTR_PORT_VLAN;
 
@@ -1170,6 +1195,16 @@ int rtnl_link_bridge_vlan_add(struct rtnl_link *link,
 	if (vlan->flags & BRIDGE_VLAN_INFO_UNTAGGED)
 		vlan_field_set(bd->vlan_info.untagged_bitmap, vlan->vid);
 
+	if (vlan->flags & BRIDGE_VLAN_INFO_POLICY_FORCE)
+		vlan_field_set(bd->vlan_info.force_bitmap, vlan->vid);
+	else
+		vlan_field_clear(bd->vlan_info.force_bitmap, vlan->vid);
+
+	if (vlan->flags & BRIDGE_VLAN_INFO_POLICY_NEST)
+		vlan_field_set(bd->vlan_info.nest_bitmap, vlan->vid);
+	else
+		vlan_field_clear(bd->vlan_info.nest_bitmap, vlan->vid);
+
 	bd->ce_mask |= BRIDGE_ATTR_PORT_VLAN;
 
 	return 0;
@@ -1215,6 +1250,11 @@ int rtnl_link_bridge_vlan_get(struct rtnl_link *link, int vid,
 	if (vlan_field_get(bd->vlan_info.untagged_bitmap, vid))
 		vlan->flags |= BRIDGE_VLAN_INFO_UNTAGGED;
 
+	if (vlan_field_get(bd->vlan_info.force_bitmap, vid))
+		vlan->flags |= BRIDGE_VLAN_INFO_POLICY_FORCE;
+
+	if (vlan_field_get(bd->vlan_info.nest_bitmap, vid))
+		vlan->flags |= BRIDGE_VLAN_INFO_POLICY_NEST;
 	return 0;
 }
 

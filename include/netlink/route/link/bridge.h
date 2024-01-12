@@ -23,6 +23,8 @@ struct rtnl_link_bridge_vlan
 	uint16_t                pvid;
 	uint32_t                vlan_bitmap[RTNL_LINK_BRIDGE_VLAN_BITMAP_LEN];
 	uint32_t                untagged_bitmap[RTNL_LINK_BRIDGE_VLAN_BITMAP_LEN];
+	uint32_t                force_bitmap[RTNL_LINK_BRIDGE_VLAN_BITMAP_LEN];
+	uint32_t                nest_bitmap[RTNL_LINK_BRIDGE_VLAN_BITMAP_LEN];
 };
 
 /**

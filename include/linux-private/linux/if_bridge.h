@@ -130,7 +130,8 @@ enum {
 #define BRIDGE_VLAN_INFO_RANGE_BEGIN	(1<<3) /* VLAN is start of vlan range */
 #define BRIDGE_VLAN_INFO_RANGE_END	(1<<4) /* VLAN is end of vlan range */
 #define BRIDGE_VLAN_INFO_BRENTRY	(1<<5) /* Global bridge VLAN entry */
-
+#define BRIDGE_VLAN_INFO_POLICY_FORCE	(1<<7) /* Force use of pvid for tagged ingress */
+#define BRIDGE_VLAN_INFO_POLICY_NEST	(1<<8) /* Use pvid for Q-in-Q mode */
 struct bridge_vlan_info {
 	__u16 flags;
 	__u16 vid;
