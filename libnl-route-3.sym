@@ -1292,6 +1292,8 @@ global:
 	rtnl_flower_set_ipv4_dst;
 	rtnl_flower_set_ipv4_src;
 	rtnl_link_bridge_set_boolopt;
+	rtnl_tc_set_ingress_block;
+	rtnl_tc_set_egress_block;
 	rtnl_nat_get_action;
 	rtnl_nat_get_flags;
 	rtnl_nat_get_mask;

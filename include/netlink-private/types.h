@@ -529,6 +529,8 @@ struct rtnl_tstats
 	uint32_t		pre ##_ifindex;		\
 	uint32_t		pre ##_handle;		\
 	uint32_t		pre ##_parent;		\
+	uint32_t		pre ##_ingr_block;	\
+	uint32_t		pre ##_egr_block;	\
 	uint32_t		pre ##_info;		\
 	uint32_t		pre ##_mtu;		\
 	uint32_t		pre ##_mpu;		\

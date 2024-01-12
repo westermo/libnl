@@ -26,8 +26,10 @@ extern "C" {
 #define TCA_ATTR_MPU		0x0800
 #define TCA_ATTR_OVERHEAD	0x1000
 #define TCA_ATTR_LINKTYPE	0x2000
-#define TCA_ATTR_CHAIN          0x4000
-#define TCA_ATTR_MAX            TCA_ATTR_CHAIN
+#define TCA_ATTR_CHAIN		0x4000
+#define TCA_ATTR_INGRESS_BLOCK	0x8000
+#define TCA_ATTR_EGRESS_BLOCK 	0x10000
+#define TCA_ATTR_MAX		TCA_ATTR_EGRESS_BLOCK
 
 extern int tca_parse(struct nlattr **, int, struct rtnl_tc *,
                      const struct nla_policy *);

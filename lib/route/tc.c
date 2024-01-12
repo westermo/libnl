@@ -217,7 +217,13 @@ int rtnl_tc_msg_build(struct rtnl_tc *tc, int type, int flags,
 		NLA_PUT_STRING(msg, TCA_KIND, tc->tc_kind);
 
 	if (tc->ce_mask & TCA_ATTR_CHAIN)
-	        NLA_PUT_U32(msg, TCA_CHAIN, tc->tc_chain);
+		NLA_PUT_U32(msg, TCA_CHAIN, tc->tc_chain);
+
+	if (tc->ce_mask & TCA_ATTR_INGRESS_BLOCK)
+		NLA_PUT_U32(msg, TCA_INGRESS_BLOCK, tc->tc_ingr_block);
+
+	if (tc->ce_mask & TCA_ATTR_EGRESS_BLOCK)
+		NLA_PUT_U32(msg, TCA_EGRESS_BLOCK, tc->tc_egr_block);
 
 	ops = rtnl_tc_get_ops(tc);
 	if (ops && (ops->to_msg_fill || ops->to_msg_fill_raw)) {
@@ -594,6 +600,30 @@ int rtnl_tc_get_chain(struct rtnl_tc *tc, uint32_t *out_value)
 		return -NLE_MISSING_ATTR;
 	*out_value = tc->tc_chain;
 	return 0;
+}
+
+/**
+ * Set ingress block index of traffic control object
+ * @arg tc              traffic control object
+ * @arg block           ingress block index
+ *
+ */
+void rtnl_tc_set_ingress_block(struct rtnl_tc *tc, uint32_t block)
+{
+        tc->tc_ingr_block = block;
+        tc->ce_mask |= TCA_ATTR_INGRESS_BLOCK;
+}
+
+/**
+ * Set egress block index of traffic control object
+ * @arg tc              traffic control object
+ * @arg block           egress block index
+ *
+ */
+void rtnl_tc_set_egress_block(struct rtnl_tc *tc, uint32_t block)
+{
+        tc->tc_egr_block = block;
+        tc->ce_mask |= TCA_ATTR_EGRESS_BLOCK;
 }
 
 /** @} */
