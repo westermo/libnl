@@ -49,6 +49,15 @@ static void nat_free_data(struct rtnl_tc *tc, void *data)
 {
 }
 
+static int nat_clone(void *_dst, void *_src)
+{
+	struct tc_nat *dst = _dst, *src = _src;
+
+	memcpy(dst, src, sizeof(*src));
+
+	return NLE_SUCCESS;
+}
+
 static int nat_msg_fill(struct rtnl_tc *tc, void *data, struct nl_msg *msg)
 {
 	struct tc_nat *nat = data;
@@ -80,7 +89,7 @@ static void nat_dump_line(struct rtnl_tc *tc, void *data,
 	else
 		nl_dump(p, " ingress");
 
-	mask = nat->mask;
+	mask = ntohl(nat->mask);
 	while (mask > 0) {
 		mask = mask >> 1;
 		pfx++;
@@ -116,7 +125,7 @@ int rtnl_nat_set_old_addr(struct rtnl_act *act, in_addr_t addr)
 	if (!(nat = (struct tc_nat *)rtnl_tc_data(TC_CAST(act))))
 		return -NLE_NOMEM;
 
-	nat->old_addr = addr;
+	nat->old_addr = htonl(addr);
 
 	return NLE_SUCCESS;
 }
@@ -128,7 +137,7 @@ int rtnl_nat_get_old_addr(struct rtnl_act *act, in_addr_t *addr)
 	if (!(nat = (struct tc_nat *)rtnl_tc_data_peek(TC_CAST(act))))
 		return -NLE_NOATTR;
 
-	*addr = nat->old_addr;
+	*addr = ntohl(nat->old_addr);
 
 	return NLE_SUCCESS;
 }
@@ -147,7 +156,7 @@ int rtnl_nat_set_new_addr(struct rtnl_act *act, in_addr_t addr)
 	if (!(nat = (struct tc_nat *)rtnl_tc_data(TC_CAST(act))))
 		return -NLE_NOMEM;
 
-	nat->new_addr = addr;
+	nat->new_addr = htonl(addr);
 
 	return NLE_SUCCESS;
 }
@@ -159,7 +168,7 @@ int rtnl_nat_get_new_addr(struct rtnl_act *act, in_addr_t *addr)
 	if (!(nat = (struct tc_nat *)rtnl_tc_data_peek(TC_CAST(act))))
 		return -NLE_NOATTR;
 
-	*addr = nat->new_addr;
+	*addr = ntohl(nat->new_addr);
 
 	return NLE_SUCCESS;
 }
@@ -178,7 +187,7 @@ int rtnl_nat_set_mask(struct rtnl_act *act, in_addr_t bitmask)
 	if (!(nat = (struct tc_nat *)rtnl_tc_data(TC_CAST(act))))
 		return -NLE_NOMEM;
 
-	nat->mask = bitmask;
+	nat->mask = htonl(bitmask);
 
 	return NLE_SUCCESS;
 }
@@ -190,7 +199,7 @@ int rtnl_nat_get_mask(struct rtnl_act *act, in_addr_t *bitmask)
 	if (!(nat = (struct tc_nat *)rtnl_tc_data_peek(TC_CAST(act))))
 		return -NLE_NOATTR;
 
-	*bitmask = nat->mask;
+	*bitmask = ntohl(nat->mask);
 
 	return NLE_SUCCESS;
 }
@@ -266,7 +275,7 @@ static struct rtnl_tc_ops nat_ops = {
 	.to_size                = sizeof(struct tc_nat),
 	.to_msg_parser          = nat_msg_parser,
 	.to_free_data           = nat_free_data,
-	.to_clone               = NULL,
+	.to_clone               = nat_clone,
 	.to_msg_fill            = nat_msg_fill,
 	.to_dump = {
 		[NL_DUMP_LINE]  = nat_dump_line,
