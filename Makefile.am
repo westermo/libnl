@@ -124,6 +124,7 @@ libnlinclude_netlink_route_act_HEADERS = \
 	include/netlink/route/act/gact.h \
 	include/netlink/route/act/mirred.h \
 	include/netlink/route/act/nat.h \
+	include/netlink/route/act/police.h \
 	include/netlink/route/act/skbedit.h \
 	include/netlink/route/act/vlan.h \
 	$(NULL)
@@ -383,6 +384,7 @@ lib_libnl_route_3_la_SOURCES = \
 	lib/route/act/gact.c \
 	lib/route/act/mirred.c \
 	lib/route/act/nat.c \
+	lib/route/act/police.c \
 	lib/route/act/skbedit.c \
 	lib/route/act/vlan.c \
 	lib/route/addr.c \
