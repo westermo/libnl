@@ -93,35 +93,35 @@ static int find_next_bit(int i, uint32_t x)
 	return j ? j + i : 0;
 }
 
-static struct rtnl_link_af_ops bridge_ops;
+static struct rtnl_link_af_ops bridge_port_ops;
 
 #define IS_BRIDGE_LINK_ASSERT(link) \
 	if (!rtnl_link_is_bridge(link)) { \
-		APPBUG("A function was expecting a link object of type bridge."); \
+		APPBUG("expecting a link object of type bridge port."); \
 		return -NLE_OPNOTSUPP; \
 	}
 
 static inline struct bridge_data *bridge_data(struct rtnl_link *link)
 {
-	return rtnl_link_af_data(link, &bridge_ops);
+	return rtnl_link_af_data(link, &bridge_port_ops);
 }
 
-static void *bridge_alloc(struct rtnl_link *link)
+static void *bridge_port_alloc(struct rtnl_link *link)
 {
 	return calloc(1, sizeof(struct bridge_data));
 }
 
-static void *bridge_clone(struct rtnl_link *link, void *data)
+static void *bridge_port_clone(struct rtnl_link *link, void *data)
 {
 	struct bridge_data *bd;
 
-	if ((bd = bridge_alloc(link)))
+	if ((bd = bridge_port_alloc(link)))
 		memcpy(bd, data, sizeof(*bd));
 
 	return bd;
 }
 
-static void bridge_free(struct rtnl_link *link, void *data)
+static void bridge_port_free(struct rtnl_link *link, void *data)
 {
 	free(data);
 }
@@ -146,7 +146,7 @@ static void check_flag(struct rtnl_link *link, struct nlattr *attrs[],
 		rtnl_link_bridge_set_flags(link, flag);
 }
 
-static int bridge_parse_protinfo(struct rtnl_link *link, struct nlattr *attr,
+static int bridge_port_parse_protinfo(struct rtnl_link *link, struct nlattr *attr,
 				 void *data)
 {
 	struct bridge_data *bd = data;
@@ -198,7 +198,7 @@ static int bridge_parse_protinfo(struct rtnl_link *link, struct nlattr *attr,
 	return 0;
 }
 
-static int bridge_parse_af_full(struct rtnl_link *link, struct nlattr *attr_full,
+static int bridge_port_parse_af_full(struct rtnl_link *link, struct nlattr *attr_full,
                                 void *data)
 {
 	struct bridge_data *bd = data;
@@ -258,7 +258,7 @@ static int bridge_parse_af_full(struct rtnl_link *link, struct nlattr *attr_full
 	return 0;
 }
 
-static int bridge_fill_pi(struct rtnl_link *link, struct nl_msg *msg,
+static int bridge_port_fill_pi(struct rtnl_link *link, struct nl_msg *msg,
 		   void *data)
 {
 	struct bridge_data *bd = data;
@@ -309,7 +309,7 @@ nla_put_failure:
 	return -NLE_MSGSIZE;
 }
 
-static int bridge_override_rtm(struct rtnl_link *link) {
+static int bridge_port_override_rtm(struct rtnl_link *link) {
         struct bridge_data *bd;
 
         if (!rtnl_link_is_bridge(link))
@@ -323,7 +323,7 @@ static int bridge_override_rtm(struct rtnl_link *link) {
         return 0;
 }
 
-static int bridge_get_af(struct nl_msg *msg, uint32_t *ext_filter_mask)
+static int bridge_port_get_af(struct nl_msg *msg, uint32_t *ext_filter_mask)
 {
 	*ext_filter_mask |= RTEXT_FILTER_BRVLAN;
 	return 0;
@@ -440,7 +440,7 @@ static struct nla_policy br_af_attrs_policy[IFLA_BRIDGE_MAX+1] = {
 	[IFLA_BRIDGE_VLAN_INFO]		= { .type = NLA_UNSPEC },
 };
 
-static int bridge_parse_af(struct rtnl_link *link, struct nlattr *af_spec,
+static int bridge_port_parse_af(struct rtnl_link *link, struct nlattr *af_spec,
 			   void *data)
 {
 	struct bridge_data *bd = data;
@@ -521,7 +521,7 @@ static int __fill_vlans(struct rtnl_link_bridge_vlan *bv, struct nl_msg *msg)
 	return 0;
 }
 
-static int bridge_fill_af(struct rtnl_link *link, struct nl_msg *msg, void *data)
+static int bridge_port_fill_af(struct rtnl_link *link, struct nl_msg *msg, void *data)
 {
 	struct bridge_data *bd = data;
 
@@ -540,7 +540,7 @@ static int bridge_fill_af(struct rtnl_link *link, struct nl_msg *msg, void *data
 	return -NLE_MSGSIZE;
 }
 
-static void bridge_dump_details(struct rtnl_link *link,
+static void bridge_port_dump_details(struct rtnl_link *link,
 				struct nl_dump_params *p, void *data)
 {
 	struct bridge_data *bd = data;
@@ -577,7 +577,7 @@ static void bridge_dump_details(struct rtnl_link *link,
 	nl_dump(p, "\n");
 }
 
-static int bridge_compare(struct rtnl_link *_a, struct rtnl_link *_b,
+static int bridge_port_compare(struct rtnl_link *_a, struct rtnl_link *_b,
 			  int family, uint32_t attrs, int flags)
 {
 	struct bridge_data *a = bridge_data(_a);
@@ -661,7 +661,7 @@ int rtnl_link_bridge_add(struct nl_sock *sk, const char *name)
 int rtnl_link_is_bridge(struct rtnl_link *link)
 {
 	return link->l_family == AF_BRIDGE &&
-	       link->l_af_ops == &bridge_ops;
+	       link->l_af_ops == &bridge_port_ops;
 }
 
 /**
@@ -1304,32 +1304,32 @@ struct rtnl_link_bridge_vlan *rtnl_link_bridge_get_port_vlan(struct rtnl_link *l
 	return NULL;
 }
 
-static struct rtnl_link_af_ops bridge_ops = {
+static struct rtnl_link_af_ops bridge_port_ops = {
 	.ao_family			= AF_BRIDGE,
-	.ao_alloc			= &bridge_alloc,
-	.ao_clone			= &bridge_clone,
-	.ao_free			= &bridge_free,
-	.ao_parse_protinfo		= &bridge_parse_protinfo,
-	.ao_parse_af			= &bridge_parse_af,
-	.ao_dump[NL_DUMP_DETAILS]	= &bridge_dump_details,
-	.ao_compare			= &bridge_compare,
-	.ao_parse_af_full		= &bridge_parse_af_full,
-	.ao_get_af			= &bridge_get_af,
-	.ao_fill_af			= &bridge_fill_af,
-	.ao_fill_pi			= &bridge_fill_pi,
+	.ao_alloc			= &bridge_port_alloc,
+	.ao_clone			= &bridge_port_clone,
+	.ao_free			= &bridge_port_free,
+	.ao_parse_protinfo		= &bridge_port_parse_protinfo,
+	.ao_parse_af			= &bridge_port_parse_af,
+	.ao_dump[NL_DUMP_DETAILS]	= &bridge_port_dump_details,
+	.ao_compare			= &bridge_port_compare,
+	.ao_parse_af_full		= &bridge_port_parse_af_full,
+	.ao_get_af			= &bridge_port_get_af,
+	.ao_fill_af			= &bridge_port_fill_af,
+	.ao_fill_pi			= &bridge_port_fill_pi,
 	.ao_fill_pi_flags	= NLA_F_NESTED,
-	.ao_override_rtm		= &bridge_override_rtm,
+	.ao_override_rtm		= &bridge_port_override_rtm,
 	.ao_fill_af_no_nest	= 1,
 };
 
-static void __init bridge_init(void)
+static void __init bridge_port_init(void)
 {
-	rtnl_link_af_register(&bridge_ops);
+	rtnl_link_af_register(&bridge_port_ops);
 }
 
-static void __exit bridge_exit(void)
+static void __exit bridge_port_exit(void)
 {
-	rtnl_link_af_unregister(&bridge_ops);
+	rtnl_link_af_unregister(&bridge_port_ops);
 }
 
 /** @} */
