@@ -60,6 +60,7 @@ extern int	rtnl_link_bridge_get_cost(struct rtnl_link *, uint32_t *);
 
 extern int 	rtnl_link_bridge_set_vlan_filtering(struct rtnl_link *, uint8_t);
 extern int 	rtnl_link_bridge_set_vlan_default_pvid(struct rtnl_link *, uint16_t);
+extern int	rtnl_link_bridge_set_boolopt(struct rtnl_link *, enum br_boolopt_id, int);
 
 extern int 	rtnl_link_bridge_vlan_flush(struct rtnl_link *);
 extern int	rtnl_link_bridge_vlan_del(struct rtnl_link *, int);

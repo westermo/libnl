@@ -293,4 +293,34 @@ struct br_mcast_stats {
 	__u64 mcast_bytes[BR_MCAST_DIR_SIZE];
 	__u64 mcast_packets[BR_MCAST_DIR_SIZE];
 };
+
+/* bridge boolean options
+ * BR_BOOLOPT_NO_LL_LEARN - disable learning from link-local packets
+ * BR_BOOLOPT_MCAST_VLAN_SNOOPING - control vlan multicast snooping
+ *
+ * IMPORTANT: if adding a new option do not forget to handle
+ *            it in br_boolopt_toggle/get and bridge sysfs
+ */
+enum br_boolopt_id {
+        BR_BOOLOPT_NO_LL_LEARN,
+        BR_BOOLOPT_MCAST_VLAN_SNOOPING,
+        BR_BOOLOPT_MST_ENABLE,
+        BR_BOOLOPT_UNICAST_FLOOD,
+        BR_BOOLOPT_BCAST_FLOOD,
+        BR_BOOLOPT_MCAST_FLOOD,
+        BR_BOOLOPT_MCAST_FLOOD_MROUTERS_ONLY,
+        BR_BOOLOPT_LOCAL_RECEIVE,
+        BR_BOOLOPT_MAX
+};
+
+/* struct br_boolopt_multi - change multiple bridge boolean options
+ *
+ * @optval: new option values (bit per option)
+ * @optmask: options to change (bit per option)
+ */
+struct br_boolopt_multi {
+        __u32 optval;
+        __u32 optmask;
+};
+
 #endif /* _LINUX_IF_BRIDGE_H */
