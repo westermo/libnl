@@ -640,6 +640,7 @@ struct rtnl_flower
 	in_addr_t        cf_ipv4_dst_mask;
 	uint8_t          cf_ip_dscp;
 	uint8_t          cf_ip_dscp_mask;
+	uint8_t          cf_ip_proto;
 };
 
 struct rtnl_cgroup

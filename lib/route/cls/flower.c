@@ -31,6 +31,7 @@
 #define FLOWER_ATTR_IPV4_SRC_MASK (1 << 13)
 #define FLOWER_ATTR_IPV4_DST      (1 << 14)
 #define FLOWER_ATTR_IPV4_DST_MASK (1 << 15)
+#define FLOWER_ATTR_IP_PROTO      (1 << 16)
 /** @endcond */
 
 #define FLOWER_DSCP_MAX             0xe0
@@ -54,6 +55,7 @@ static struct nla_policy flower_policy[TCA_FLOWER_MAX + 1] = {
 	[TCA_FLOWER_KEY_IPV4_SRC_MASK] = { .type = NLA_U32 },
 	[TCA_FLOWER_KEY_IPV4_DST]      = { .type = NLA_U32 },
 	[TCA_FLOWER_KEY_IPV4_DST_MASK] = { .type = NLA_U32 },
+	[TCA_FLOWER_KEY_IP_PROTO]      = { .type = NLA_U8 },
 };
 
 static int flower_msg_parser(struct rtnl_tc *tc, void *data)
@@ -151,6 +153,11 @@ static int flower_msg_parser(struct rtnl_tc *tc, void *data)
 		f->cf_mask |= FLOWER_ATTR_IPV4_DST_MASK;
 	}
 
+	if (tb[TCA_FLOWER_KEY_IP_PROTO]) {
+		f->cf_ip_proto = nla_get_u8(tb[TCA_FLOWER_KEY_IP_PROTO]);
+		f->cf_mask |= FLOWER_ATTR_IP_PROTO;
+	}
+
 	return 0;
 }
 
@@ -214,6 +221,9 @@ static int flower_msg_fill(struct rtnl_tc *tc, void *data, struct nl_msg *msg)
 	if (f->cf_mask & FLOWER_ATTR_IPV4_DST_MASK)
 		NLA_PUT_U32(msg, TCA_FLOWER_KEY_IPV4_DST_MASK,
 			    f->cf_ipv4_dst_mask);
+
+	if (f->cf_mask & FLOWER_ATTR_IP_PROTO)
+		NLA_PUT_U8(msg, TCA_FLOWER_KEY_IP_PROTO, f->cf_ip_proto);
 
 	return 0;
 
@@ -330,6 +340,9 @@ static void flower_dump_details(struct rtnl_tc *tc, void *data,
 		inet_ntop(AF_INET, &f->cf_ipv4_dst_mask, mask_str, sizeof(mask_str));
 		nl_dump(p, "IPv4 dst %s mask %s\n", addr_str, mask_str);
 	}
+
+	if (f->cf_mask & FLOWER_ATTR_IP_PROTO)
+		nl_dump(p, " protocol %u", f->cf_ip_proto);
 }
 
 /**
@@ -774,6 +787,46 @@ int rtnl_flower_get_ipv4_dst(struct rtnl_cls *cls, in_addr_t *out_addr,
 		else
 			*out_mask = 0xffffffff;
 	}
+
+	return 0;
+}
+
+/**
+ * Set ip protocol for flower classifier
+ * @arg cls		Flower classifier.
+ * @arg ip_proto	ip protocol (tcp, udp, icmp ...)
+ * @return 0 on success or a negative error code.
+ */
+int rtnl_flower_set_ip_proto(struct rtnl_cls *cls, uint8_t ip_proto)
+{
+	struct rtnl_flower *f;
+
+	if (!(f = rtnl_tc_data(TC_CAST(cls))))
+		return -NLE_NOMEM;
+
+	f->cf_ip_proto = ip_proto;
+	f->cf_mask |= FLOWER_ATTR_IP_PROTO;
+
+	return 0;
+}
+
+/**
+ * Get ip protocol for flower classifier
+ * @arg cls		Flower classifier.
+ * @arg proto		ip protocol
+ * @return 0 on success or a negative error code.
+*/
+int rtnl_flower_get_ip_proto(struct rtnl_cls *cls, uint8_t *ip_proto)
+{
+	struct rtnl_flower *f;
+
+	if (!(f = rtnl_tc_data_peek(TC_CAST(cls))))
+		return -NLE_INVAL;
+
+	if (!(f->cf_mask & FLOWER_ATTR_IP_PROTO))
+		return -NLE_MISSING_ATTR;
+
+	*ip_proto = f->cf_ip_proto;
 
 	return 0;
 }
