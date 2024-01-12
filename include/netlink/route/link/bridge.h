@@ -6,6 +6,8 @@
 #ifndef NETLINK_LINK_BRIDGE_H_
 #define NETLINK_LINK_BRIDGE_H_
 
+#include <linux/if_bridge.h>
+
 #include <netlink/netlink.h>
 #include <netlink/route/link.h>
 
@@ -55,6 +57,20 @@ extern int	rtnl_link_bridge_get_priority(struct rtnl_link *);
 
 extern int	rtnl_link_bridge_set_cost(struct rtnl_link *, uint32_t);
 extern int	rtnl_link_bridge_get_cost(struct rtnl_link *, uint32_t *);
+
+extern int 	rtnl_link_bridge_vlan_flush(struct rtnl_link *);
+extern int	rtnl_link_bridge_vlan_del(struct rtnl_link *, int);
+extern int	rtnl_link_bridge_vlan_add(struct rtnl_link *,
+					  struct bridge_vlan_info *);
+extern int	rtnl_link_bridge_vlan_get(struct rtnl_link *, int,
+					  struct bridge_vlan_info *);
+extern int      rtnl_link_bridge_vlan_get_pvid(struct rtnl_link *,
+					       struct bridge_vlan_info *);
+extern int	rtnl_link_bridge_vlan_foreach(struct rtnl_link *,
+					      int (*cb)(struct rtnl_link *,
+							const struct bridge_vlan_info *,
+							void *),
+					      void *arg);
 
 extern int	rtnl_link_bridge_unset_flags(struct rtnl_link *, unsigned int);
 extern int	rtnl_link_bridge_set_flags(struct rtnl_link *, unsigned int);
