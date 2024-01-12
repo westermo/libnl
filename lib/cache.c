@@ -209,6 +209,21 @@ struct nl_cache *nl_cache_alloc(struct nl_cache_ops *ops)
 	return cache;
 }
 
+struct nl_cache *nl_cache_alloc_no_hashtable(struct nl_cache_ops *ops)
+{
+	void (*oo_keygen)(struct nl_object *, uint32_t *, uint32_t);
+	struct nl_cache *cache;
+
+	oo_keygen = ops->co_obj_ops->oo_keygen;
+	ops->co_obj_ops->oo_keygen = NULL;
+
+	cache = nl_cache_alloc(ops);
+
+	ops->co_obj_ops->oo_keygen = oo_keygen;
+
+	return cache;
+}
+
 /**
  * Allocate new cache and fill it
  * @arg ops		Cache operations
