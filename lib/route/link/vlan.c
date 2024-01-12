@@ -162,9 +162,10 @@ static int vlan_parse(struct rtnl_link *link, struct nlattr *data,
 
 		/* align to have a little reserve */
 		vi->vi_egress_size = (i + 32) & ~31;
-		vi->vi_egress_qos = calloc(vi->vi_egress_size, sizeof(*vi->vi_egress_qos));
+		vi->vi_egress_qos = realloc(vi->vi_egress_qos, vi->vi_egress_size * sizeof(*vi->vi_egress_qos));
 		if (vi->vi_egress_qos == NULL)
 			return -NLE_NOMEM;
+		memset(vi->vi_egress_qos, vi->vi_egress_size, sizeof(*vi->vi_egress_qos));
 
 		i = 0;
 		nla_for_each_nested(nla, tb[IFLA_VLAN_EGRESS_QOS], remaining) {
