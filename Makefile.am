@@ -690,6 +690,7 @@ cli_programs = \
 	src/nl-addr-add \
 	src/nl-addr-delete \
 	src/nl-addr-list \
+	src/nl-bridge \
 	src/nl-class-add \
 	src/nl-class-delete \
 	src/nl-class-list \
@@ -767,6 +768,8 @@ src_nl_addr_delete_CPPFLAGS =       $(src_cppflags)
 src_nl_addr_delete_LDADD =          $(src_ldadd)
 src_nl_addr_list_CPPFLAGS =         $(src_cppflags)
 src_nl_addr_list_LDADD =            $(src_ldadd)
+src_nl_bridge_CPPFLAGS =            $(src_cppflags)
+src_nl_bridge_LDADD =               $(src_ldadd)
 src_nl_class_add_CPPFLAGS =         $(src_cppflags)
 src_nl_class_add_LDADD =            $(src_ldadd)
 src_nl_class_delete_CPPFLAGS =      $(src_cppflags)
