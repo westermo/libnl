@@ -436,7 +436,7 @@ int rtnl_interlink_set_lan_id(struct rtnl_link *link, uint8_t lan_id)
 	IS_INTERLINK_LINK_ASSERT(link);
 
 	info->hi_lan_id = lan_id;
-	info->hi_mask |= INTERLINK_ATTR_NET_ID;
+	info->hi_mask |= INTERLINK_ATTR_LAN_ID;
 
 	return 0;
 }
