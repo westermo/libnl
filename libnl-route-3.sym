@@ -1356,4 +1356,6 @@ global:
 	rtnl_interlink_set_lan_id;
 	rtnl_interlink_get_net_id;
 	rtnl_interlink_set_net_id;
+	rtnl_flower_set_ip_ttl;
+	rtnl_flower_get_ip_ttl;
 } libnl_3_6;
