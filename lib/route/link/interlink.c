@@ -226,7 +226,7 @@ static void interlink_dump_details(struct rtnl_link *link, struct nl_dump_params
 
 	if (info->hi_mask & INTERLINK_ATTR_NET_ID) {
 		nl_dump(p, "      net_id ");
-		nl_dump_line(p, "%s\n", info->hi_net_id);
+		nl_dump_line(p, "%d\n", info->hi_net_id);
 	}
 }
 
