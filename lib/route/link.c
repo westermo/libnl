@@ -2434,6 +2434,17 @@ uint8_t rtnl_link_get_carrier(struct rtnl_link *link)
 }
 
 /**
+ * Unset carrier request of link object
+ * @arg link		Link object
+ *
+ * @see rtnl_link_set_carrier()
+ */
+void rtnl_link_unset_carrier_request_flag(struct rtnl_link *link)
+{
+	link->ce_mask &= ~LINK_ATTR_CARRIER;
+}
+
+/**
  * Return carrier on/off changes of link object
  * @arg link		Link object
  * @arg carrier_changes	Pointer to store number of carrier changes
