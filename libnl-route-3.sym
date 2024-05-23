@@ -1358,4 +1358,5 @@ global:
 	rtnl_interlink_set_net_id;
 	rtnl_flower_set_ip_ttl;
 	rtnl_flower_get_ip_ttl;
+	rtnl_link_unset_carrier_request_flag;
 } libnl_3_6;
