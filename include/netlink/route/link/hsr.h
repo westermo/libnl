@@ -37,6 +37,15 @@ extern "C" {
 
 	extern int rtnl_hsr_get_op_mode(struct rtnl_link *link, uint32_t *mode);
 	extern int rtnl_hsr_set_op_mode(struct rtnl_link *link, uint32_t mode);
+	
+	extern int rtnl_hsr_get_nft(struct rtnl_link *link, uint32_t *nft);
+	extern int rtnl_hsr_set_nft(struct rtnl_link *link, uint32_t nft);
+
+	extern int rtnl_hsr_get_lci(struct rtnl_link *link, uint32_t *lci);
+	extern int rtnl_hsr_set_lci(struct rtnl_link *link, uint32_t lci);
+
+	extern int rtnl_hsr_get_ai(struct rtnl_link *link, uint32_t *ai);
+	extern int rtnl_hsr_set_ai(struct rtnl_link *link, uint32_t ai);
 
 #ifdef __cplusplus
 }

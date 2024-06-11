@@ -1341,6 +1341,12 @@ global:
 	rtnl_hsr_set_eft;
 	rtnl_hsr_get_op_mode;
 	rtnl_hsr_set_op_mode;
+	rtnl_hsr_get_nft;
+	rtnl_hsr_set_nft;
+	rtnl_hsr_get_lci;
+	rtnl_hsr_set_lci;
+	rtnl_hsr_get_ai;
+	rtnl_hsr_set_ai;
 	rtnl_link_interlink_alloc;
 	rtnl_link_interlink_add;
 	rtnl_link_is_interlink;
