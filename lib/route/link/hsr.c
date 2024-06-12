@@ -35,6 +35,9 @@
 #define HSR_ATTR_SEQ_NR           (1 << 6)
 #define HSR_ATTR_EFT              (1 << 7)
 #define HSR_ATTR_HSR_OP_MODE      (1 << 8)
+#define HSR_ATTR_NFT              (1 << 9)
+#define HSR_ATTR_LCI              (1 << 10)
+#define HSR_ATTR_AI               (1 << 11)
 
 struct hsr_info {
 	uint32_t hi_slave1;
@@ -46,6 +49,9 @@ struct hsr_info {
 	uint16_t hi_seq_nr;
 	uint32_t hi_eft;
 	uint32_t hi_hsr_mode;
+	uint32_t hi_nft;
+	uint32_t hi_lci;
+	uint32_t hi_ai;
 	uint32_t hi_mask;
 };
 
@@ -59,6 +65,9 @@ static struct nla_policy hsr_policy[IFLA_HSR_MAX+1] = {
 	[IFLA_HSR_PROTOCOL]		= { .type = NLA_U8 },
 	[IFLA_HSR_EFT]		        = { .type = NLA_U32 },
 	[IFLA_HSR_MODE]		        = { .type = NLA_U32 },
+	[IFLA_HSR_NFT]		        = { .type = NLA_U32 },
+	[IFLA_HSR_LCI]		        = { .type = NLA_U32 },
+	[IFLA_HSR_AI]		        = { .type = NLA_U32 },
 };
 
 
@@ -160,6 +169,22 @@ static int hsr_parse(struct rtnl_link *link, struct nlattr *data,
 		info->hi_hsr_mode = nla_get_u32(tb[IFLA_HSR_MODE]);
 		info->hi_mask |= HSR_ATTR_HSR_OP_MODE;
 	}
+ 
+	if (tb[IFLA_HSR_NFT]) {
+		info->hi_nft = nla_get_u32(tb[IFLA_HSR_NFT]);
+		info->hi_mask |= HSR_ATTR_NFT;
+	}
+
+	if (tb[IFLA_HSR_LCI]) {
+		info->hi_lci = nla_get_u32(tb[IFLA_HSR_LCI]);
+		info->hi_mask |= HSR_ATTR_LCI;
+	}
+
+	if (tb[IFLA_HSR_AI]) {
+		info->hi_ai = nla_get_u32(tb[IFLA_HSR_AI]);
+		info->hi_mask |= HSR_ATTR_AI;
+	}
+
 
  out:
 	return err;
@@ -193,6 +218,15 @@ static int hsr_put_attrs(struct nl_msg *msg, struct rtnl_link *link)
 
 	if (info->hi_mask & HSR_ATTR_HSR_OP_MODE)
 		NLA_PUT_U32(msg, IFLA_HSR_MODE, info->hi_hsr_mode);
+ 
+	if (info->hi_mask & HSR_ATTR_NFT)
+		NLA_PUT_U32(msg, IFLA_HSR_NFT, info->hi_nft);
+
+	if (info->hi_mask & HSR_ATTR_LCI)
+		NLA_PUT_U32(msg, IFLA_HSR_LCI, info->hi_lci);
+
+	if (info->hi_mask & HSR_ATTR_AI)
+		NLA_PUT_U32(msg, IFLA_HSR_AI, info->hi_ai);
 
 	nla_nest_end(msg, data);
 
@@ -518,6 +552,117 @@ int rtnl_hsr_set_op_mode(struct rtnl_link *link, uint32_t mode)
 
 	info->hi_hsr_mode = mode;
 	info->hi_mask |= HSR_ATTR_HSR_OP_MODE;
+
+	return 0;
+}
+
+/**
+ * Get Node Forget Time
+ * @arg link		HSR link
+ * @arg nft			node forget time
+ *
+ * @return 0 on success or a negative error code otherwise.
+ */
+int rtnl_hsr_get_nft(struct rtnl_link *link, uint32_t *nft)
+{
+	struct hsr_info *info = link->l_info;
+
+	IS_HSR_LINK_ASSERT(link);
+
+	*nft = info->hi_nft;
+
+	return 0;
+}
+
+/**
+ * Set Node Forget Time for an HSR link
+ * @arg link        HSR link
+ * @arg nft         Node Forget Time (in ms)
+ *
+ * @return 0 on success or negative error code in case of an error
+ */
+int rtnl_hsr_set_nft(struct rtnl_link *link, uint32_t nft)
+{
+	struct hsr_info *info = link->l_info;
+
+	IS_HSR_LINK_ASSERT(link);
+
+	info->hi_nft = nft;
+	info->hi_mask |= HSR_ATTR_NFT;
+
+	return 0;
+}
+
+/**
+ * Get Life Check Interval
+ * @arg link		HSR link
+ * @arg lci			life check interval
+ *
+ * @return 0 on success or a negative error code otherwise.
+ */
+int rtnl_hsr_get_lci(struct rtnl_link *link, uint32_t *lci)
+{
+	struct hsr_info *info = link->l_info;
+
+	IS_HSR_LINK_ASSERT(link);
+
+	*lci = info->hi_lci;
+
+	return 0;
+}
+
+/**
+ * Set Life Check Interval for an HSR link
+ * @arg link        HSR link
+ * @arg lci         Life Check Interval (in ms)
+ *
+ * @return 0 on success or negative error code in case of an error
+ */
+int rtnl_hsr_set_lci(struct rtnl_link *link, uint32_t lci)
+{
+	struct hsr_info *info = link->l_info;
+
+	IS_HSR_LINK_ASSERT(link);
+
+	info->hi_lci = lci;
+	info->hi_mask |= HSR_ATTR_LCI;
+
+	return 0;
+}
+
+/**
+ * Get Announce Interval
+ * @arg link		HSR link
+ * @arg ai			announce interval
+ *
+ * @return 0 on success or a negative error code otherwise.
+ */
+int rtnl_hsr_get_ai(struct rtnl_link *link, uint32_t *ai)
+{
+	struct hsr_info *info = link->l_info;
+
+	IS_HSR_LINK_ASSERT(link);
+
+	*ai = info->hi_ai;
+
+	return 0;
+}
+
+/**
+ * Set Announce Interval for an HSR link
+ * @arg link        HSR link
+ * @arg ai          Announce Intercal (in ms)
+ *
+ * @return 0 on success or negative error code in case of an error
+ */
+int rtnl_hsr_set_ai(struct rtnl_link *link, uint32_t ai)
+{
+	struct hsr_info *info = link->l_info;
+
+	IS_HSR_LINK_ASSERT(link);
+
+	info->hi_ai = ai;
+	info->hi_mask |= HSR_ATTR_AI;
 
 	return 0;
 }

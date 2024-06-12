@@ -1135,6 +1135,9 @@ enum {
 					 */
 	IFLA_HSR_EFT,		        /* Entry Forget Time */
 	IFLA_HSR_MODE,		        /* HSR Mode (H, N, T, U) */
+	IFLA_HSR_NFT,		        /* Node Forget Time */
+	IFLA_HSR_LCI,		        /* Life Check Interval */
+	IFLA_HSR_AI,		        /* Announce Interval */
 	__IFLA_HSR_MAX,
 };
 
