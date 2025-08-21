@@ -645,6 +645,14 @@ struct rtnl_flower
 	uint8_t          cf_ip_ttl_mask;
 	uint8_t          cf_icmpv6_type;
 	uint8_t          cf_icmpv6_type_mask;
+	uint16_t         cf_src_port_min;
+	uint16_t         cf_src_port_max;
+	uint16_t         cf_dst_port_min;
+	uint16_t         cf_dst_port_max;
+	uint16_t         cf_tcp_src_port;
+	uint16_t         cf_tcp_dst_port;
+	uint16_t         cf_udp_src_port;
+	uint16_t         cf_udp_dst_port;
 };
 
 struct rtnl_cgroup
