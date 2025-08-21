@@ -843,6 +843,12 @@ int rtnl_tc_clone(struct nl_object *dstobj, struct nl_object *srcobj)
 	dst->tc_subdata = NULL;
 	dst->tc_link = NULL;
 	dst->tc_ops = NULL;
+	memset(dst->tc_stats, 0, sizeof(src->tc_stats));
+
+	if (src->ce_mask & TCA_ATTR_STATS) {
+		memcpy(dst->tc_stats, src->tc_stats, sizeof(src->tc_stats));
+		dst->ce_mask |= TCA_ATTR_STATS;
+	}
 
 	if (src->tc_link) {
 		nl_object_get(OBJ_CAST(src->tc_link));
