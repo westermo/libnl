@@ -34,6 +34,15 @@
 #define FLOWER_ATTR_IP_PROTO      (1 << 16)
 #define FLOWER_ATTR_IP_TTL        (1 << 17)
 #define FLOWER_ATTR_IP_TTL_MASK   (1 << 18)
+#define FLOWER_ATTR_SRC_PORT_MIN  (1 << 19)
+#define FLOWER_ATTR_SRC_PORT_MAX  (1 << 20)
+#define FLOWER_ATTR_DST_PORT_MIN  (1 << 21)
+#define FLOWER_ATTR_DST_PORT_MAX  (1 << 22)
+#define FLOWER_ATTR_TCP_SRC_PORT  (1 << 23)
+#define FLOWER_ATTR_TCP_DST_PORT  (1 << 24)
+#define FLOWER_ATTR_UDP_SRC_PORT  (1 << 25)
+#define FLOWER_ATTR_UDP_DST_PORT  (1 << 26)
+
 /** @endcond */
 
 #define FLOWER_DSCP_MAX             0xe0
@@ -172,6 +181,46 @@ static int flower_msg_parser(struct rtnl_tc *tc, void *data)
 		f->cf_mask |= FLOWER_ATTR_IP_PROTO;
 	}
 
+	if (tb[TCA_FLOWER_KEY_PORT_SRC_MIN]) {
+		f->cf_src_port_min = nla_get_u16(tb[TCA_FLOWER_KEY_PORT_SRC_MIN]);
+		f->cf_mask |= FLOWER_ATTR_SRC_PORT_MIN;
+	}
+
+	if (tb[TCA_FLOWER_KEY_PORT_SRC_MAX]) {
+		f->cf_src_port_max = nla_get_u16(tb[TCA_FLOWER_KEY_PORT_SRC_MAX]);
+		f->cf_mask |= FLOWER_ATTR_SRC_PORT_MAX;
+	}
+
+	if (tb[TCA_FLOWER_KEY_PORT_DST_MIN]) {
+		f->cf_dst_port_min = nla_get_u16(tb[TCA_FLOWER_KEY_PORT_DST_MIN]);
+		f->cf_mask |= FLOWER_ATTR_DST_PORT_MIN;
+	}
+
+	if (tb[TCA_FLOWER_KEY_PORT_DST_MAX]) {
+		f->cf_dst_port_max = nla_get_u16(tb[TCA_FLOWER_KEY_PORT_DST_MAX]);
+		f->cf_mask |= FLOWER_ATTR_DST_PORT_MAX;
+	}
+
+	/* TCP ports */
+	if (tb[TCA_FLOWER_KEY_TCP_SRC]) {
+		f->cf_tcp_src_port = nla_get_u16(tb[TCA_FLOWER_KEY_TCP_SRC]);
+		f->cf_mask |= FLOWER_ATTR_TCP_SRC_PORT;
+	}
+	if (tb[TCA_FLOWER_KEY_TCP_DST]) {
+		f->cf_tcp_dst_port = nla_get_u16(tb[TCA_FLOWER_KEY_TCP_DST]);
+		f->cf_mask |= FLOWER_ATTR_TCP_DST_PORT;
+	}
+
+	/* UDP ports */
+	if (tb[TCA_FLOWER_KEY_UDP_SRC]) {
+		f->cf_udp_src_port = nla_get_u16(tb[TCA_FLOWER_KEY_UDP_SRC]);
+		f->cf_mask |= FLOWER_ATTR_UDP_SRC_PORT;
+	}
+	if (tb[TCA_FLOWER_KEY_UDP_DST]) {
+		f->cf_udp_dst_port = nla_get_u16(tb[TCA_FLOWER_KEY_UDP_DST]);
+		f->cf_mask |= FLOWER_ATTR_UDP_DST_PORT;
+	}
+
 	return 0;
 }
 
@@ -244,6 +293,40 @@ static int flower_msg_fill(struct rtnl_tc *tc, void *data, struct nl_msg *msg)
 
 	if (f->cf_mask & FLOWER_ATTR_IP_PROTO)
 		NLA_PUT_U8(msg, TCA_FLOWER_KEY_IP_PROTO, f->cf_ip_proto);
+
+	if (f->cf_mask & FLOWER_ATTR_SRC_PORT_MIN)
+		NLA_PUT_U16(msg, TCA_FLOWER_KEY_PORT_SRC_MIN, f->cf_src_port_min);
+
+	if (f->cf_mask & FLOWER_ATTR_SRC_PORT_MAX)
+		NLA_PUT_U16(msg, TCA_FLOWER_KEY_PORT_SRC_MAX, f->cf_src_port_max);
+
+	if (f->cf_mask & FLOWER_ATTR_DST_PORT_MIN)
+		NLA_PUT_U16(msg, TCA_FLOWER_KEY_PORT_DST_MIN, f->cf_dst_port_min);
+
+	if (f->cf_mask & FLOWER_ATTR_DST_PORT_MIN)
+		NLA_PUT_U16(msg, TCA_FLOWER_KEY_PORT_DST_MAX, f->cf_dst_port_max);
+
+	/* TCP single ports */
+	if (f->cf_mask & FLOWER_ATTR_TCP_SRC_PORT) {
+		NLA_PUT_U16(msg, TCA_FLOWER_KEY_TCP_SRC, f->cf_tcp_src_port);
+		NLA_PUT_U16(msg, TCA_FLOWER_KEY_TCP_SRC_MASK, htons(0xFFFF));
+	}
+
+	if (f->cf_mask & FLOWER_ATTR_TCP_DST_PORT) {
+		NLA_PUT_U16(msg, TCA_FLOWER_KEY_TCP_DST, f->cf_tcp_dst_port);
+		NLA_PUT_U16(msg, TCA_FLOWER_KEY_TCP_DST_MASK, htons(0xFFFF));
+	}
+
+	/* UDP single ports */
+	if (f->cf_mask & FLOWER_ATTR_UDP_SRC_PORT) {
+		NLA_PUT_U16(msg, TCA_FLOWER_KEY_UDP_SRC, f->cf_udp_src_port);
+		NLA_PUT_U16(msg, TCA_FLOWER_KEY_UDP_SRC_MASK, htons(0xFFFF));
+	}
+
+	if (f->cf_mask & FLOWER_ATTR_UDP_DST_PORT) {
+		NLA_PUT_U16(msg, TCA_FLOWER_KEY_UDP_DST, f->cf_udp_dst_port);
+		NLA_PUT_U16(msg, TCA_FLOWER_KEY_UDP_DST_MASK, htons(0xFFFF));
+	}
 
 	return 0;
 
@@ -367,8 +450,35 @@ static void flower_dump_details(struct rtnl_tc *tc, void *data,
 		nl_dump(p, "IPv4 dst %s mask %s\n", addr_str, mask_str);
 	}
 
+
 	if (f->cf_mask & FLOWER_ATTR_IP_PROTO)
 		nl_dump(p, " protocol %u", f->cf_ip_proto);
+
+
+	if (f->cf_mask & FLOWER_ATTR_SRC_PORT_MIN)
+		nl_dump(p, " src_min %u", f->cf_src_port_min);
+
+	if (f->cf_mask & FLOWER_ATTR_SRC_PORT_MAX)
+		nl_dump(p, " src_max %u", f->cf_src_port_max);
+
+	if (f->cf_mask & FLOWER_ATTR_DST_PORT_MIN)
+		nl_dump(p, " dst_min %u", f->cf_dst_port_min);
+
+	if (f->cf_mask & FLOWER_ATTR_DST_PORT_MAX)
+		nl_dump(p, " dst_max %u", f->cf_dst_port_max);
+
+
+	if (f->cf_mask & FLOWER_ATTR_TCP_SRC_PORT)
+		nl_dump(p, " tcp_src %u", ntohs(f->cf_tcp_src_port));
+
+	if (f->cf_mask & FLOWER_ATTR_TCP_DST_PORT)
+		nl_dump(p, " tcp_dst %u", ntohs(f->cf_tcp_dst_port));
+
+	if (f->cf_mask & FLOWER_ATTR_UDP_SRC_PORT)
+		nl_dump(p, " udp_src %u", ntohs(f->cf_udp_src_port));
+
+	if (f->cf_mask & FLOWER_ATTR_UDP_DST_PORT)
+		nl_dump(p, " udp_dst %u", ntohs(f->cf_udp_dst_port));
 }
 
 /**
@@ -1041,6 +1151,287 @@ int rtnl_flower_get_flags(struct rtnl_cls *cls, int *flags)
 		return -NLE_MISSING_ATTR;
 
 	*flags = f->cf_flags;
+
+	return 0;
+}
+
+/**
+ * Set source port range for flower classifier
+ * @arg cls		Flower classifier.
+ * @arg min		Minimum source port (0 to skip).
+ * @arg max		Maximum source port (0 to skip).
+ * @return 0 on success or a negative error code.
+ */
+int rtnl_flower_set_src_port_range(struct rtnl_cls *cls, uint16_t min, uint16_t max)
+{
+	struct rtnl_flower *f = rtnl_tc_data(TC_CAST(cls));
+
+	if (!f)
+		return -NLE_NOMEM;
+
+	if (min) {
+		f->cf_src_port_min = htons(min);
+		f->cf_mask |= FLOWER_ATTR_SRC_PORT_MIN;
+	}
+
+	if (max) {
+		f->cf_src_port_max = htons(max);
+		f->cf_mask |= FLOWER_ATTR_SRC_PORT_MAX;
+	}
+
+	return 0;
+}
+
+/**
+ * Set destination port range for flower classifier
+ * @arg cls		Flower classifier.
+ * @arg min		Minimum destination port (0 to skip).
+ * @arg max		Maximum destination port (0 to skip).
+ * @return 0 on success or a negative error code.
+ */
+int rtnl_flower_set_dst_port_range(struct rtnl_cls *cls, uint16_t min, uint16_t max)
+{
+	struct rtnl_flower *f = rtnl_tc_data(TC_CAST(cls));
+
+	if (!f)
+		return -NLE_NOMEM;
+
+	if (min) {
+		f->cf_dst_port_min = htons(min);
+		f->cf_mask |= FLOWER_ATTR_DST_PORT_MIN;
+	}
+
+	if (max) {
+		f->cf_dst_port_max = htons(max);
+		f->cf_mask |= FLOWER_ATTR_DST_PORT_MAX;
+	}
+
+	return 0;
+}
+
+/**
+ * Get source port range for flower classifier
+ * @arg cls		Flower classifier.
+ * @arg min		Pointer to store minimum source port (0 if unset).
+ * @arg max		Pointer to store maximum source port (0 if unset).
+ * @return 0 on success or a negative error code.
+ */
+int rtnl_flower_get_src_port_range(struct rtnl_cls *cls, uint16_t *min, uint16_t *max)
+{
+	struct rtnl_flower *f = rtnl_tc_data_peek(TC_CAST(cls));
+
+	if (!f)
+		return -NLE_INVAL;
+
+	if (min) {
+		if (f->cf_mask & FLOWER_ATTR_SRC_PORT_MIN)
+			*min = ntohs(f->cf_src_port_min);
+		else
+			*min = 0;
+	}
+
+	if (max) {
+		if (f->cf_mask & FLOWER_ATTR_SRC_PORT_MAX)
+			*max = ntohs(f->cf_src_port_max);
+		else
+			*max = 0;
+	}
+
+	return 0;
+}
+
+/**
+ * Get destination port range for flower classifier
+ * @arg cls		Flower classifier.
+ * @arg min		Pointer to store minimum destination port (0 if unset).
+ * @arg max		Pointer to store maximum destination port (0 if unset).
+ * @return 0 on success or a negative error code.
+ */
+int rtnl_flower_get_dst_port_range(struct rtnl_cls *cls, uint16_t *min, uint16_t *max)
+{
+	struct rtnl_flower *f = rtnl_tc_data_peek(TC_CAST(cls));
+
+	if (!f)
+		return -NLE_INVAL;
+
+	if (min) {
+		if (f->cf_mask & FLOWER_ATTR_DST_PORT_MIN)
+			*min = ntohs(f->cf_dst_port_min);
+		else
+			*min = 0;
+	}
+
+	if (max) {
+		if (f->cf_mask & FLOWER_ATTR_DST_PORT_MAX)
+			*max = ntohs(f->cf_dst_port_max);
+		else
+			*max = 0;
+	}
+
+	return 0;
+}
+
+/**
+ * Set TCP source port for flower classifier (exact match).
+ * @arg cls   Flower classifier.
+ * @arg port  TCP source port (host order).
+ * @return 0 on success or a negative error code.
+ */
+int rtnl_flower_set_tcp_src_port(struct rtnl_cls *cls, uint16_t port)
+{
+	struct rtnl_flower *f = rtnl_tc_data(TC_CAST(cls));
+
+	if (!f)
+		return -NLE_NOMEM;
+
+	f->cf_tcp_src_port = htons(port);
+	f->cf_mask |= FLOWER_ATTR_TCP_SRC_PORT;
+
+	return 0;
+}
+
+/**
+ * Set TCP destination port for flower classifier (exact match).
+ * @arg cls   Flower classifier.
+ * @arg port  TCP destination port (host order).
+ * @return 0 on success or a negative error code.
+ */
+int rtnl_flower_set_tcp_dst_port(struct rtnl_cls *cls, uint16_t port)
+{
+	struct rtnl_flower *f = rtnl_tc_data(TC_CAST(cls));
+
+	if (!f)
+		return -NLE_NOMEM;
+
+	f->cf_tcp_dst_port = htons(port);
+	f->cf_mask |= FLOWER_ATTR_TCP_DST_PORT;
+
+	return 0;
+}
+
+/**
+ * Get TCP source port for flower classifier.
+ * @arg cls   Flower classifier.
+ * @arg port  Pointer to store TCP source port (host order).
+ * @return 0 on success, -NLE_MISSING_ATTR if unset, or another negative error.
+ */
+int rtnl_flower_get_tcp_src_port(struct rtnl_cls *cls, uint16_t *port)
+{
+	struct rtnl_flower *f = rtnl_tc_data_peek(TC_CAST(cls));
+
+	if (!f)
+		return -NLE_INVAL;
+
+	if (!(f->cf_mask & FLOWER_ATTR_TCP_SRC_PORT))
+		return -NLE_MISSING_ATTR;
+
+	if (port)
+		*port = ntohs(f->cf_tcp_src_port);
+
+	return 0;
+}
+
+/**
+ * Get TCP destination port for flower classifier.
+ * @arg cls   Flower classifier.
+ * @arg port  Pointer to store TCP destination port (host order).
+ * @return 0 on success, -NLE_MISSING_ATTR if unset, or another negative error.
+ */
+int rtnl_flower_get_tcp_dst_port(struct rtnl_cls *cls, uint16_t *port)
+{
+	struct rtnl_flower *f = rtnl_tc_data_peek(TC_CAST(cls));
+
+	if (!f)
+		return -NLE_INVAL;
+
+	if (!(f->cf_mask & FLOWER_ATTR_TCP_DST_PORT))
+		return -NLE_MISSING_ATTR;
+
+	if (port)
+		*port = ntohs(f->cf_tcp_dst_port);
+
+	return 0;
+}
+
+/**
+ * Set UDP source port for flower classifier (exact match).
+ * @arg cls   Flower classifier.
+ * @arg port  UDP source port (host order).
+ * @return 0 on success or a negative error code.
+ */
+int rtnl_flower_set_udp_src_port(struct rtnl_cls *cls, uint16_t port)
+{
+	struct rtnl_flower *f = rtnl_tc_data(TC_CAST(cls));
+
+	if (!f)
+		return -NLE_NOMEM;
+
+	f->cf_udp_src_port = htons(port);
+	f->cf_mask |= FLOWER_ATTR_UDP_SRC_PORT;
+
+	return 0;
+}
+
+/**
+ * Set UDP destination port for flower classifier (exact match).
+ * @arg cls   Flower classifier.
+ * @arg port  UDP destination port (host order).
+ * @return 0 on success or a negative error code.
+ */
+int rtnl_flower_set_udp_dst_port(struct rtnl_cls *cls, uint16_t port)
+{
+	struct rtnl_flower *f = rtnl_tc_data(TC_CAST(cls));
+
+	if (!f)
+		return -NLE_NOMEM;
+
+	f->cf_udp_dst_port = htons(port);
+	f->cf_mask |= FLOWER_ATTR_UDP_DST_PORT;
+
+	return 0;
+}
+
+/**
+ * Get UDP source port for flower classifier.
+ * @arg cls   Flower classifier.
+ * @arg port  Pointer to store UDP source port (host order).
+ * @return 0 on success, -NLE_MISSING_ATTR if unset, or another negative error.
+ */
+
+int rtnl_flower_get_udp_src_port(struct rtnl_cls *cls, uint16_t *port)
+{
+	struct rtnl_flower *f = rtnl_tc_data_peek(TC_CAST(cls));
+
+	if (!f)
+		return -NLE_INVAL;
+
+	if (!(f->cf_mask & FLOWER_ATTR_UDP_SRC_PORT))
+		return -NLE_MISSING_ATTR;
+
+	if (port)
+		*port = ntohs(f->cf_udp_src_port);
+
+	return 0;
+}
+
+/**
+ * Get UDP destination port for flower classifier.
+ * @arg cls   Flower classifier.
+ * @arg port  Pointer to store UDP destination port (host order).
+ * @return 0 on success, -NLE_MISSING_ATTR if unset, or another negative error.
+ */
+int rtnl_flower_get_udp_dst_port(struct rtnl_cls *cls, uint16_t *port)
+{
+	struct rtnl_flower *f = rtnl_tc_data_peek(TC_CAST(cls));
+
+	if (!f)
+		return -NLE_INVAL;
+
+	if (!(f->cf_mask & FLOWER_ATTR_UDP_DST_PORT))
+		return -NLE_MISSING_ATTR;
+
+	if (port)
+		*port = ntohs(f->cf_udp_dst_port);
 
 	return 0;
 }

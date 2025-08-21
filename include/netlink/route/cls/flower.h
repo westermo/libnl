@@ -60,6 +60,21 @@ extern int rtnl_flower_append_action(struct rtnl_cls *, struct rtnl_act *);
 extern int rtnl_flower_del_action(struct rtnl_cls *, struct rtnl_act *);
 extern struct rtnl_act* rtnl_flower_get_action(struct rtnl_cls *);
 
+extern int rtnl_flower_set_src_port_range(struct rtnl_cls *cls, uint16_t min, uint16_t max);
+extern int rtnl_flower_get_src_port_range(struct rtnl_cls *cls, uint16_t *min, uint16_t *max);
+extern int rtnl_flower_set_dst_port_range(struct rtnl_cls *cls, uint16_t min, uint16_t max);
+extern int rtnl_flower_get_dst_port_range(struct rtnl_cls *cls, uint16_t *min, uint16_t *max);
+
+extern int rtnl_flower_set_tcp_src_port(struct rtnl_cls *cls, uint16_t port);
+extern int rtnl_flower_set_tcp_dst_port(struct rtnl_cls *cls, uint16_t port);
+extern int rtnl_flower_get_tcp_src_port(struct rtnl_cls *cls, uint16_t *port);
+extern int rtnl_flower_get_tcp_dst_port(struct rtnl_cls *cls, uint16_t *port);
+
+extern int rtnl_flower_set_udp_src_port(struct rtnl_cls *cls, uint16_t port);
+extern int rtnl_flower_set_udp_dst_port(struct rtnl_cls *cls, uint16_t port);
+extern int rtnl_flower_get_udp_src_port(struct rtnl_cls *cls, uint16_t *port);
+extern int rtnl_flower_get_udp_dst_port(struct rtnl_cls *cls, uint16_t *port);
+
 #ifdef __cplusplus
 }
 #endif
