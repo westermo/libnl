@@ -34,6 +34,8 @@
 #define FLOWER_ATTR_IP_PROTO      (1 << 16)
 #define FLOWER_ATTR_IP_TTL        (1 << 17)
 #define FLOWER_ATTR_IP_TTL_MASK   (1 << 18)
+#define FLOWER_ATTR_ICMPV6_TYPE   (1 << 19)
+#define FLOWER_ATTR_ICMPV6_TYPE_MASK (1 << 20)
 /** @endcond */
 
 #define FLOWER_DSCP_MAX             0xe0
@@ -60,6 +62,8 @@ static struct nla_policy flower_policy[TCA_FLOWER_MAX + 1] = {
 	[TCA_FLOWER_KEY_IPV4_DST]      = { .type = NLA_U32 },
 	[TCA_FLOWER_KEY_IPV4_DST_MASK] = { .type = NLA_U32 },
 	[TCA_FLOWER_KEY_IP_PROTO]      = { .type = NLA_U8 },
+	[TCA_FLOWER_KEY_ICMPV6_TYPE]   = { .type = NLA_U8 },
+	[TCA_FLOWER_KEY_ICMPV6_TYPE_MASK] = { .type = NLA_U8 },
 };
 
 static int flower_msg_parser(struct rtnl_tc *tc, void *data)
@@ -172,6 +176,17 @@ static int flower_msg_parser(struct rtnl_tc *tc, void *data)
 		f->cf_mask |= FLOWER_ATTR_IP_PROTO;
 	}
 
+	if (tb[TCA_FLOWER_KEY_ICMPV6_TYPE]) {
+		f->cf_icmpv6_type = nla_get_u8(tb[TCA_FLOWER_KEY_ICMPV6_TYPE]);
+		f->cf_mask |= FLOWER_ATTR_ICMPV6_TYPE;
+	}
+
+	if (tb[TCA_FLOWER_KEY_ICMPV6_TYPE_MASK]) {
+		f->cf_icmpv6_type_mask =
+			nla_get_u8(tb[TCA_FLOWER_KEY_ICMPV6_TYPE_MASK]);
+		f->cf_mask |= FLOWER_ATTR_ICMPV6_TYPE_MASK;
+	}
+
 	return 0;
 }
 
@@ -244,6 +259,12 @@ static int flower_msg_fill(struct rtnl_tc *tc, void *data, struct nl_msg *msg)
 
 	if (f->cf_mask & FLOWER_ATTR_IP_PROTO)
 		NLA_PUT_U8(msg, TCA_FLOWER_KEY_IP_PROTO, f->cf_ip_proto);
+
+	if (f->cf_mask & FLOWER_ATTR_ICMPV6_TYPE)
+		NLA_PUT_U8(msg, TCA_FLOWER_KEY_ICMPV6_TYPE, f->cf_icmpv6_type);
+
+	if (f->cf_mask & FLOWER_ATTR_ICMPV6_TYPE_MASK)
+		NLA_PUT_U8(msg, TCA_FLOWER_KEY_ICMPV6_TYPE_MASK, f->cf_icmpv6_type_mask);
 
 	return 0;
 
@@ -369,6 +390,12 @@ static void flower_dump_details(struct rtnl_tc *tc, void *data,
 
 	if (f->cf_mask & FLOWER_ATTR_IP_PROTO)
 		nl_dump(p, " protocol %u", f->cf_ip_proto);
+
+	if (f->cf_mask & FLOWER_ATTR_ICMPV6_TYPE)
+		nl_dump(p, " icmpv6_type %u", f->cf_icmpv6_type);
+
+	if (f->cf_mask & FLOWER_ATTR_ICMPV6_TYPE_MASK)
+		nl_dump(p, " icmpv6_type_mask %u", f->cf_icmpv6_type_mask);
 }
 
 /**
@@ -928,6 +955,55 @@ int rtnl_flower_get_ip_proto(struct rtnl_cls *cls, uint8_t *ip_proto)
 		return -NLE_MISSING_ATTR;
 
 	*ip_proto = f->cf_ip_proto;
+
+	return 0;
+}
+
+/**
+ * Set icmpv6 type for flower classifier
+ * @arg cls		Flower classifier.
+ * @arg type		icmpv6 type
+ * @arg mask		mask for icmpv6 type
+ * @return 0 on success or a negative error code.
+ */
+int rtnl_flower_set_icmpv6_type(struct rtnl_cls *cls, uint8_t type, uint8_t mask)
+
+{
+	struct rtnl_flower *f;
+
+	if (!(f = rtnl_tc_data(TC_CAST(cls))))
+		return -NLE_NOMEM;
+
+	f->cf_icmpv6_type = type;
+	f->cf_mask |= FLOWER_ATTR_ICMPV6_TYPE;
+
+	if (mask) {
+		f->cf_icmpv6_type_mask = mask;
+		f->cf_mask |= FLOWER_ATTR_ICMPV6_TYPE_MASK;
+	}
+
+	return 0;
+}
+
+/**
+ * Get icmpv6 type for flower classifier
+ * @arg cls		Flower classifier.
+ * @arg type		icmpv6 type
+ * @arg mask		mask for icmpv6 type
+ * @return 0 on success or a negative error code.
+ */
+int rtnl_flower_get_icmpv6_type(struct rtnl_cls *cls, uint8_t *type, uint8_t *mask)
+{
+	struct rtnl_flower *f;
+
+	if (!(f = rtnl_tc_data_peek(TC_CAST(cls))))
+		return -NLE_INVAL;
+
+	if (!(f->cf_mask & FLOWER_ATTR_ICMPV6_TYPE))
+		return -NLE_MISSING_ATTR;
+
+	*type = f->cf_icmpv6_type;
+	*mask = f->cf_icmpv6_type_mask;
 
 	return 0;
 }

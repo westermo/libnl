@@ -53,6 +53,9 @@ extern int rtnl_flower_get_ipv4_dst(struct rtnl_cls *, in_addr_t *,
 extern int rtnl_flower_set_ip_proto(struct rtnl_cls *, uint8_t);
 extern int rtnl_flower_get_ip_proto(struct rtnl_cls *, uint8_t *);
 
+extern int rtnl_flower_set_icmpv6_type(struct rtnl_cls *, uint8_t, uint8_t);
+extern int rtnl_flower_get_icmpv6_type(struct rtnl_cls *, uint8_t *, uint8_t *);
+
 extern int rtnl_flower_set_flags(struct rtnl_cls *, int);
 extern int rtnl_flower_get_flags(struct rtnl_cls *, int *);
 

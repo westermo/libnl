@@ -643,6 +643,8 @@ struct rtnl_flower
 	uint8_t          cf_ip_proto;
 	uint8_t          cf_ip_ttl;
 	uint8_t          cf_ip_ttl_mask;
+	uint8_t          cf_icmpv6_type;
+	uint8_t          cf_icmpv6_type_mask;
 };
 
 struct rtnl_cgroup

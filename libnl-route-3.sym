@@ -1365,4 +1365,6 @@ global:
 	rtnl_flower_set_ip_ttl;
 	rtnl_flower_get_ip_ttl;
 	rtnl_link_unset_carrier_request_flag;
+	rtnl_flower_set_icmpv6_type;
+	rtnl_flower_get_icmpv6_type;
 } libnl_3_6;
