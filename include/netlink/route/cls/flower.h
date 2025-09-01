@@ -37,8 +37,10 @@ extern int rtnl_flower_set_src_mac(struct rtnl_cls *, unsigned char *,
 extern int rtnl_flower_get_src_mac(struct rtnl_cls *, unsigned char *,
                                    unsigned char *);
 
-extern int rtnl_flower_set_ip_dscp(struct rtnl_cls *, uint8_t, uint8_t);
-extern int rtnl_flower_get_ip_dscp(struct rtnl_cls *, uint8_t *, uint8_t *);
+extern int rtnl_flower_set_ip_dscp(struct rtnl_cls *, uint8_t);
+extern int rtnl_flower_get_ip_dscp(struct rtnl_cls *, uint8_t *);
+extern int rtnl_flower_set_ip_tos(struct rtnl_cls *, uint8_t, uint8_t);
+extern int rtnl_flower_get_ip_tos(struct rtnl_cls *, uint8_t *, uint8_t *);
 
 extern int rtnl_flower_set_ip_ttl(struct rtnl_cls *, uint8_t, uint8_t);
 extern int rtnl_flower_get_ip_ttl(struct rtnl_cls *, uint8_t *, uint8_t *);

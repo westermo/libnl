@@ -638,8 +638,8 @@ struct rtnl_flower
 	in_addr_t        cf_ipv4_src_mask;
 	in_addr_t        cf_ipv4_dst;
 	in_addr_t        cf_ipv4_dst_mask;
-	uint8_t          cf_ip_dscp;
-	uint8_t          cf_ip_dscp_mask;
+	uint8_t          cf_ip_tos;
+	uint8_t          cf_ip_tos_mask;
 	uint8_t          cf_ip_proto;
 	uint8_t          cf_ip_ttl;
 	uint8_t          cf_ip_ttl_mask;

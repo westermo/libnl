@@ -24,8 +24,8 @@
 #define FLOWER_ATTR_DST_MAC_MASK  (1 << 6)
 #define FLOWER_ATTR_SRC_MAC       (1 << 7)
 #define FLOWER_ATTR_SRC_MAC_MASK  (1 << 8)
-#define FLOWER_ATTR_IP_DSCP       (1 << 9)
-#define FLOWER_ATTR_IP_DSCP_MASK  (1 << 10)
+#define FLOWER_ATTR_IP_TOS        (1 << 9)
+#define FLOWER_ATTR_IP_TOS_MASK   (1 << 10)
 #define FLOWER_ATTR_PROTO         (1 << 11)
 #define FLOWER_ATTR_IPV4_SRC      (1 << 12)
 #define FLOWER_ATTR_IPV4_SRC_MASK (1 << 13)
@@ -47,8 +47,9 @@
 
 /** @endcond */
 
-#define FLOWER_DSCP_MAX             0xe0
-#define FLOWER_DSCP_MASK_MAX        0xe0
+#define FLOWER_TOS_MAX              0xe0
+#define FLOWER_TOS_MASK_MAX         0xe0
+#define FLOWER_DSCP_MAX             63
 #define FLOWER_TTL_MAX              0xfe
 #define FLOWER_TTL_MASK_MAX         0xfe
 #define FLOWER_VID_MAX              4095
@@ -139,13 +140,13 @@ static int flower_msg_parser(struct rtnl_tc *tc, void *data)
 	}
 
 	if (tb[TCA_FLOWER_KEY_IP_TOS]) {
-		f->cf_ip_dscp = nla_get_u8(tb[TCA_FLOWER_KEY_IP_TOS]);
-		f->cf_mask |= FLOWER_ATTR_IP_DSCP;
+		f->cf_ip_tos = nla_get_u8(tb[TCA_FLOWER_KEY_IP_TOS]);
+		f->cf_mask |= FLOWER_ATTR_IP_TOS;
 	}
 
 	if (tb[TCA_FLOWER_KEY_IP_TOS_MASK]) {
-		f->cf_ip_dscp_mask = nla_get_u8(tb[TCA_FLOWER_KEY_IP_TOS_MASK]);
-		f->cf_mask |= FLOWER_ATTR_IP_DSCP_MASK;
+		f->cf_ip_tos_mask = nla_get_u8(tb[TCA_FLOWER_KEY_IP_TOS_MASK]);
+		f->cf_mask |= FLOWER_ATTR_IP_TOS_MASK;
 	}
 
 	if (tb[TCA_FLOWER_KEY_IP_TTL]) {
@@ -280,11 +281,11 @@ static int flower_msg_fill(struct rtnl_tc *tc, void *data, struct nl_msg *msg)
 	if (f->cf_mask & FLOWER_ATTR_SRC_MAC_MASK)
 		NLA_PUT(msg, TCA_FLOWER_KEY_ETH_SRC_MASK, ETH_ALEN, f->cf_src_mac_mask);
 
-	if (f->cf_mask & FLOWER_ATTR_IP_DSCP)
-		NLA_PUT_U8(msg, TCA_FLOWER_KEY_IP_TOS, f->cf_ip_dscp);
+	if (f->cf_mask & FLOWER_ATTR_IP_TOS)
+		NLA_PUT_U8(msg, TCA_FLOWER_KEY_IP_TOS, f->cf_ip_tos);
 
-	if (f->cf_mask & FLOWER_ATTR_IP_DSCP_MASK)
-		NLA_PUT_U8(msg, TCA_FLOWER_KEY_IP_TOS_MASK, f->cf_ip_dscp_mask);
+	if (f->cf_mask & FLOWER_ATTR_IP_TOS_MASK)
+		NLA_PUT_U8(msg, TCA_FLOWER_KEY_IP_TOS_MASK, f->cf_ip_tos_mask);
 
 	if (f->cf_mask & FLOWER_ATTR_IP_TTL)
 		NLA_PUT_U8(msg, TCA_FLOWER_KEY_IP_TTL, f->cf_ip_ttl);
@@ -447,11 +448,11 @@ static void flower_dump_details(struct rtnl_tc *tc, void *data,
 		        f->cf_src_mac_mask[2], f->cf_src_mac_mask[3],
 		        f->cf_src_mac_mask[4], f->cf_src_mac_mask[5]);
 
-	if (f->cf_mask & FLOWER_ATTR_IP_DSCP)
-		nl_dump(p, " dscp %u", f->cf_ip_dscp);
+	if (f->cf_mask & FLOWER_ATTR_IP_TOS)
+		nl_dump(p, " tos %u", f->cf_ip_tos);
 
-	if (f->cf_mask & FLOWER_ATTR_IP_DSCP_MASK)
-		nl_dump(p, " dscp_mask %u", f->cf_ip_dscp_mask);
+	if (f->cf_mask & FLOWER_ATTR_IP_TOS_MASK)
+		nl_dump(p, " tos_mask %u", f->cf_ip_tos_mask);
 
 	if (f->cf_mask & FLOWER_ATTR_IP_TTL)
 		nl_dump(p, " ip_ttl %u", f->cf_ip_ttl);
@@ -801,11 +802,10 @@ int rtnl_flower_get_src_mac(struct rtnl_cls *cls, unsigned char *mac,
 /**
  * Set dscp value for flower classifier
  * @arg cls		Flower classifier.
- * @arg dscp		dscp value
- * @arg mask		mask for dscp value
+ * @arg dscp		dscp value (0..63)
  * @return 0 on success or a negative error code.
  */
-int rtnl_flower_set_ip_dscp(struct rtnl_cls *cls, uint8_t dscp, uint8_t mask)
+int rtnl_flower_set_ip_dscp(struct rtnl_cls *cls, uint8_t dscp)
 {
 	struct rtnl_flower *f;
 
@@ -815,16 +815,8 @@ int rtnl_flower_set_ip_dscp(struct rtnl_cls *cls, uint8_t dscp, uint8_t mask)
 	if (dscp > FLOWER_DSCP_MAX)
 		return -NLE_RANGE;
 
-	if (mask > FLOWER_DSCP_MASK_MAX)
-		return -NLE_RANGE;
-
-	f->cf_ip_dscp = dscp;
-	f->cf_mask |= FLOWER_ATTR_IP_DSCP;
-
-	if (mask) {
-		f->cf_ip_dscp_mask = mask;
-		f->cf_mask |= FLOWER_ATTR_IP_DSCP_MASK;
-	}
+	f->cf_ip_tos = (dscp << 2);
+	f->cf_mask |= FLOWER_ATTR_IP_TOS;
 
 	return 0;
 }
@@ -832,22 +824,74 @@ int rtnl_flower_set_ip_dscp(struct rtnl_cls *cls, uint8_t dscp, uint8_t mask)
 /**
  * Get dscp value for flower classifier
  * @arg cls		Flower classifier.
- * @arg dscp		dscp value
- * @arg mask		mask for dscp value
+ * @arg dscp		dscp value (0..63)
  * @return 0 on success or a negative error code.
 */
-int rtnl_flower_get_ip_dscp(struct rtnl_cls *cls, uint8_t *dscp, uint8_t *mask)
+int rtnl_flower_get_ip_dscp(struct rtnl_cls *cls, uint8_t *dscp)
 {
 	struct rtnl_flower *f;
 
 	if (!(f = rtnl_tc_data_peek(TC_CAST(cls))))
 		return -NLE_INVAL;
 
-	if (!(f->cf_mask & FLOWER_ATTR_IP_DSCP))
+	if (!(f->cf_mask & FLOWER_ATTR_IP_TOS))
 		return -NLE_MISSING_ATTR;
 
-	*dscp = f->cf_ip_dscp;
-	*mask = f->cf_ip_dscp_mask;
+	*dscp = (f->cf_ip_tos >> 2);
+
+	return 0;
+}
+
+/**
+ * Set tos value for flower classifier
+ * @arg cls		Flower classifier.
+ * @arg tos		tos value
+ * @arg mask		mask for tos value
+ * @return 0 on success or a negative error code.
+ */
+int rtnl_flower_set_ip_tos(struct rtnl_cls *cls, uint8_t tos, uint8_t mask)
+{
+	struct rtnl_flower *f;
+
+	if (!(f = rtnl_tc_data(TC_CAST(cls))))
+		return -NLE_NOMEM;
+
+	if (tos > FLOWER_TOS_MAX)
+		return -NLE_RANGE;
+
+	if (mask > FLOWER_TOS_MASK_MAX)
+		return -NLE_RANGE;
+
+	f->cf_ip_tos = tos;
+	f->cf_mask |= FLOWER_ATTR_IP_TOS;
+
+	if (mask) {
+		f->cf_ip_tos_mask = mask;
+		f->cf_mask |= FLOWER_ATTR_IP_TOS_MASK;
+	}
+
+	return 0;
+}
+
+/**
+ * Get tos value for flower classifier
+ * @arg cls		Flower classifier.
+ * @arg tos		tos value
+ * @arg mask		mask for tos value
+ * @return 0 on success or a negative error code.
+*/
+int rtnl_flower_get_ip_tos(struct rtnl_cls *cls, uint8_t *tos, uint8_t *mask)
+{
+	struct rtnl_flower *f;
+
+	if (!(f = rtnl_tc_data_peek(TC_CAST(cls))))
+		return -NLE_INVAL;
+
+	if (!(f->cf_mask & FLOWER_ATTR_IP_TOS))
+		return -NLE_MISSING_ATTR;
+
+	*tos = f->cf_ip_tos;
+	*mask = f->cf_ip_tos_mask;
 
 	return 0;
 }

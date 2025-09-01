@@ -1379,4 +1379,6 @@ global:
 	rtnl_flower_set_udp_dst_port;
 	rtnl_flower_get_udp_src_port;
 	rtnl_flower_get_udp_dst_port;
+	rtnl_flower_set_ip_tos;
+	rtnl_flower_get_ip_tos;
 } libnl_3_6;
