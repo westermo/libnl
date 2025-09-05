@@ -638,11 +638,21 @@ struct rtnl_flower
 	in_addr_t        cf_ipv4_src_mask;
 	in_addr_t        cf_ipv4_dst;
 	in_addr_t        cf_ipv4_dst_mask;
-	uint8_t          cf_ip_dscp;
-	uint8_t          cf_ip_dscp_mask;
+	uint8_t          cf_ip_tos;
+	uint8_t          cf_ip_tos_mask;
 	uint8_t          cf_ip_proto;
 	uint8_t          cf_ip_ttl;
 	uint8_t          cf_ip_ttl_mask;
+	uint8_t          cf_icmpv6_type;
+	uint8_t          cf_icmpv6_type_mask;
+	uint16_t         cf_src_port_min;
+	uint16_t         cf_src_port_max;
+	uint16_t         cf_dst_port_min;
+	uint16_t         cf_dst_port_max;
+	uint16_t         cf_tcp_src_port;
+	uint16_t         cf_tcp_dst_port;
+	uint16_t         cf_udp_src_port;
+	uint16_t         cf_udp_dst_port;
 };
 
 struct rtnl_cgroup
